@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{TITLE}}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4; --surface: #fcfcfb; --card: #ffffff; --line: #e4e3df; --grid: #ecebe7;
+  --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #75746f;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --bar-bg: #eef3fb; --good: #12805c; --chip: #eef3fb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --card: #1a1a19; --line: #2c2c2a; --grid: #262624;
+    --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #9a998f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --bar-bg: #1d2633; --good: #3fbf8f; --chip: #1d2633;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --card: #1a1a19; --line: #2c2c2a; --grid: #262624;
+  --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #9a998f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --bar-bg: #1d2633; --good: #3fbf8f; --chip: #1d2633;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.55 system-ui, "Segoe UI", Tahoma, sans-serif; }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 14px; margin: 0 0 10px; color: var(--ink-2); font-weight: 600; }
+a { color: var(--s1); }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 13px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: pulse 2s infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 6px transparent; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+.bar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); }
+.seg button { border: 0; background: none; padding: 7px 11px; font: inherit; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--s1); color: #fff; }
+input[type=search] { font: inherit; padding: 7px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); min-width: 0; flex: 1 1 160px; max-width: 280px; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; color: var(--ink-2); }
+.btn { font: inherit; padding: 7px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); text-decoration: none; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; gap: 6px; align-items: center; background: var(--chip); border-radius: 999px; padding: 3px 10px; font-size: 13px; }
+.chip button { border: 0; background: none; color: var(--ink-2); cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.kpi b { display: block; font-size: 24px; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--ink-2); font-size: 13px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.wide { grid-column: 1 / -1; }
+.chart { position: relative; height: 240px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--ink-2); font-size: 13px; margin-bottom: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-inline-end: 5px; vertical-align: -1px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.list li { position: relative; display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; overflow: hidden; }
+.list li .fill { position: absolute; inset-block: 0; inset-inline-start: 0; background: var(--bar-bg); border-radius: 6px; z-index: 0; }
+.list li span { position: relative; z-index: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list li .n { color: var(--ink-2); font-variant-numeric: tabular-nums; flex: none; }
+.list li:hover .fill { background: color-mix(in srgb, var(--s1) 22%, transparent); }
+.list li.static { cursor: default; }
+.empty { color: var(--ink-3); padding: 6px 2px; }
+#map { height: 300px; border-radius: 8px; }
+.visits { display: grid; gap: 0; }
+.visit { display: grid; grid-template-columns: 26px minmax(0, 1.3fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) 120px; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--line); cursor: pointer; }
+.visit:hover { background: var(--surface); }
+.visit .sub { color: var(--ink-2); font-size: 12px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.visit > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { font-size: 11px; border-radius: 6px; padding: 0 6px; background: var(--chip); color: var(--ink-2); margin-inline-start: 4px; }
+.tag.new { color: var(--good); }
+.on { color: var(--good); }
+.more { margin-top: 10px; text-align: center; }
+@media (max-width: 720px) {
+  .visit { grid-template-columns: 26px minmax(0, 1fr) 110px; }
+  .visit .hide-sm { display: none; }
+}
+dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; }
+dialog::backdrop { background: rgb(0 0 0 / .45); }
+.dlg-head { position: sticky; top: 0; background: var(--card); display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.dlg-body { padding: 14px 16px; display: grid; gap: 14px; }
+dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
+dt { color: var(--ink-2); }
+dd { margin: 0; overflow-wrap: anywhere; }
+.mono { font-family: ui-monospace, monospace; font-size: 12px; direction: ltr; text-align: left; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.timeline li { display: flex; gap: 10px; }
+.timeline time { color: var(--ink-2); font-variant-numeric: tabular-nums; flex: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>📊 {{TITLE}}</h1>
+    <div class="bar-row">
+      <span class="live"><span class="dot"></span><span id="online">…</span></span>
+      <a class="btn" id="csv" href="#">⬇️ CSV</a>
+      <a class="btn" href="{{PREFIX}}/logout">خروج</a>
+    </div>
+  </header>
+
+  <div class="bar-row" role="toolbar" aria-label="الفلاتر">
+    <div class="seg" id="range">
+      <button data-r="today">اليوم</button><button data-r="7">7 أيام</button><button data-r="30">30 يوم</button>
+      <button data-r="90">3 أشهر</button><button data-r="365">سنة</button><button data-r="all">الكل</button>
+    </div>
+    <input type="search" id="q" placeholder="ابحث: IP، مدينة، صفحة، جهاز…" aria-label="بحث">
+    <label class="toggle"><input type="checkbox" id="new"> الجدد بس</label>
+    <label class="toggle"><input type="checkbox" id="bots"> مع البوتات</label>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <section class="kpis" aria-label="الأرقام">
+    <div class="kpi"><b id="k-visits">–</b><span>زيارة</span></div>
+    <div class="kpi"><b id="k-visitors">–</b><span>زائر</span></div>
+    <div class="kpi"><b id="k-new">–</b><span>زائر جديد</span></div>
+    <div class="kpi"><b id="k-per">–</b><span>صفحة لكل زائر</span></div>
+    <div class="kpi"><b id="k-dur">–</b><span>معدل البقاء</span></div>
+    <div class="kpi"><b id="k-bounce">–</b><span>طلعوا من أول صفحة</span></div>
+  </section>
+
+  <section class="grid">
+    <div class="card wide">
+      <h2>الزيارات باليوم</h2>
+      <div class="legend"><span><i style="background:var(--s1)"></i>زيارات</span><span><i style="background:var(--s2)"></i>زوار</span></div>
+      <div class="chart"><canvas id="c-days" aria-label="الزيارات والزوار باليوم" role="img"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>بأي ساعة يجون (توقيت الموقع)</h2>
+      <div class="chart"><canvas id="c-hours" aria-label="الزيارات حسب الساعة" role="img"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>نوع الجهاز</h2>
+      <div class="chart"><canvas id="c-devices" aria-label="نوع الجهاز" role="img"></canvas></div>
+    </div>
+    <div class="card"><h2>🌍 الدول</h2><ul class="list" id="l-countries"></ul></div>
+    <div class="card"><h2>🏙️ المدن</h2><ul class="list" id="l-cities"></ul></div>
+    <div class="card"><h2>🔗 منين جاو</h2><ul class="list" id="l-sources"></ul></div>
+    <div class="card"><h2>📄 الصفحات</h2><ul class="list" id="l-pages"></ul></div>
+    <div class="card"><h2>📶 شركة الإنترنت</h2><ul class="list" id="l-isps"></ul></div>
+    <div class="card"><h2>⚙️ النظام</h2><ul class="list" id="l-os"></ul></div>
+    <div class="card"><h2>🌐 المتصفح</h2><ul class="list" id="l-browsers"></ul></div>
+    <div class="card"><h2>📱 نوع الموبايل</h2><ul class="list" id="l-brands"></ul></div>
+    <div class="card"><h2>📲 فتحوه من تطبيق</h2><ul class="list" id="l-apps"></ul></div>
+    <div class="card"><h2>👆 أكثر الضغطات</h2><ul class="list" id="l-clicks"></ul></div>
+    <div class="card"><h2>🗣️ اللغة</h2><ul class="list" id="l-languages"></ul></div>
+    <div class="card"><h2>🖥️ حجم الشاشة</h2><ul class="list" id="l-screens"></ul></div>
+    <div class="card wide"><h2>🗺️ الخريطة (تقريبية، على مستوى المدينة)</h2><div id="map"></div></div>
+  </section>
+
+  <section class="card" aria-label="كل زيارة">
+    <h2>كل زيارة <span id="total" style="color:var(--ink-3)"></span></h2>
+    <div class="visits" id="visits"></div>
+    <div class="more"><button class="btn" id="more" hidden>عرض المزيد</button></div>
+  </section>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dlg-head"><b id="dlg-title">تفاصيل الزيارة</b><button class="btn" id="dlg-close" aria-label="سكّر">✕</button></div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+
+<script>
+const P = "{{PREFIX}}";
+const LISTS = { countries: "country_code", cities: "city", sources: "source", pages: "path", isps: "isp", os: "os",
+                browsers: "browser", brands: "brand", apps: "app", languages: "lang", screens: "screen", clicks: null };
+const LABELS = { country_code: "الدولة", city: "المدينة", source: "منين", path: "الصفحة", isp: "الشركة", os: "النظام",
+                 browser: "المتصفح", brand: "الموبايل", app: "التطبيق", lang: "اللغة", screen: "الشاشة", device: "الجهاز", visitor: "الزائر" };
+const KINDS = { click: "ضغطة", link: "رابط", outbound: "رابط خارجي", download: "تحميل", contact: "تواصل" };
+const DEVICE_ORDER = ["موبايل", "كمبيوتر", "تابلت", "بوت"];
+let state = { range: "7", q: "", new: false, bots: false, filters: {}, offset: 0 };
+try { Object.assign(state, JSON.parse(localStorage.getItem("vd-state") || "{}"), { offset: 0 }); } catch (e) {}
+const charts = {};
+let map, layer, filterNames = {};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmt = (n) => Number(n).toLocaleString("ar-IQ");
+const dur = (s) => !s ? "–" : s < 60 ? `${s} ث` : s < 3600 ? `${Math.floor(s / 60)} د ${s % 60} ث` : `${Math.floor(s / 3600)} س ${Math.floor(s % 3600 / 60)} د`;
+
+function query(extra = {}) {
+  const p = new URLSearchParams({ range: state.range, ...state.filters, ...extra });
+  if (state.q) p.set("q", state.q);
+  if (state.new) p.set("new", "1");
+  if (state.bots) p.set("bots", "1");
+  return p.toString();
+}
+function save() { try { localStorage.setItem("vd-state", JSON.stringify({ range: state.range, bots: state.bots })); } catch (e) {} }
+async function get(path) {
+  const r = await fetch(`${P}/${path}`, { credentials: "same-origin" });
+  if (r.status === 401) { location.reload(); throw new Error("login"); }
+  return r.json();
+}
+
+function setFilter(key, value, label) {
+  if (!key || !value) return;
+  state.filters[key] = value; filterNames[key] = label || value; state.offset = 0; load();
+}
+function chips() {
+  $("chips").innerHTML = Object.entries(state.filters).map(([k, v]) =>
+    `<span class="chip">${esc(LABELS[k] || k)}: ${esc(filterNames[k] || v)} <button data-k="${esc(k)}" aria-label="شيل الفلتر">×</button></span>`).join("");
+}
+$("chips").addEventListener("click", (e) => {
+  const k = e.target.dataset && e.target.dataset.k;
+  if (k) { delete state.filters[k]; state.offset = 0; load(); }
+});
+
+function list(id, items, key) {
+  const el = $(`l-${id}`);
+  if (!items.length) { el.innerHTML = `<li class="static empty">ماكو بيانات بعد</li>`; return; }
+  const max = Math.max(...items.map((i) => i.n)), total = items.reduce((a, i) => a + i.n, 0);
+  el.innerHTML = items.map((i) => {
+    const label = i.label || i.value;
+    return `<li class="${key ? "" : "static"}" data-v="${esc(i.value ?? "")}" data-l="${esc(label)}" title="${esc(label)}: ${fmt(i.n)} (${Math.round(100 * i.n / total)}٪)">
+      <div class="fill" style="width:${(100 * i.n / max).toFixed(1)}%"></div>
+      <span>${esc(label)}${i.kind && i.kind !== "click" ? ` <small class="tag">${esc(KINDS[i.kind] || i.kind)}</small>` : ""}</span><span class="n">${fmt(i.n)}</span></li>`;
+  }).join("");
+  if (key) el.onclick = (e) => { const li = e.target.closest("li[data-v]"); if (li) setFilter(key, li.dataset.v, li.dataset.l); };
+}
+
+function axes() {
+  const grid = { color: css("--grid") }, ticks = { color: css("--ink-2"), font: { family: "system-ui" } };
+  return { x: { grid: { display: false }, ticks, border: { color: css("--line") } },
+           y: { beginAtZero: true, grid, ticks: { ...ticks, precision: 0 }, border: { display: false } } };
+}
+const tooltip = { rtl: true, textDirection: "rtl", backgroundColor: "#0b0b0bE6", padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4 };
+
+function drawCharts(s) {
+  Chart.defaults.font.family = "system-ui, Segoe UI, Tahoma, sans-serif";
+  const days = s.days.map((d) => d.day.slice(5));
+  const data = {
+    days: { type: "line", data: { labels: days, datasets: [
+      { label: "زيارات", data: s.days.map((d) => d.visits), borderColor: css("--s1"), backgroundColor: css("--s1"), borderWidth: 2, pointRadius: days.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: .25 },
+      { label: "زوار", data: s.days.map((d) => d.visitors), borderColor: css("--s2"), backgroundColor: css("--s2"), borderWidth: 2, pointRadius: days.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: .25 }] },
+      options: { interaction: { mode: "index", intersect: false }, plugins: { legend: { display: false }, tooltip }, scales: axes() } },
+    hours: { type: "bar", data: { labels: s.hours.map((_, h) => String(h)), datasets: [
+      { label: "زيارات", data: s.hours, backgroundColor: css("--s1"), borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: "bottom", maxBarThickness: 18 }] },
+      options: { plugins: { legend: { display: false }, tooltip: { ...tooltip, callbacks: { title: (i) => `الساعة ${i[0].label}:00` } } }, scales: axes() } },
+    devices: (() => {
+      const items = [...s.devices].sort((a, b) => DEVICE_ORDER.indexOf(a.label) - DEVICE_ORDER.indexOf(b.label));
+      const colors = { "موبايل": css("--s1"), "كمبيوتر": css("--s2"), "تابلت": css("--s3"), "بوت": css("--s4") };
+      const total = items.reduce((a, i) => a + i.n, 0) || 1;
+      return { type: "doughnut", data: { labels: items.map((i) => `${i.label} ${Math.round(100 * i.n / total)}٪`), datasets: [
+        { data: items.map((i) => i.n), backgroundColor: items.map((i) => colors[i.label] || css("--ink-3")), borderColor: css("--card"), borderWidth: 2, _values: items.map((i) => i.value) }] },
+        options: { cutout: "62%", plugins: { legend: { position: "bottom", rtl: true, labels: { color: css("--ink-2"), usePointStyle: true, pointStyle: "rectRounded" } }, tooltip },
+                   onClick: (_, el) => { if (el.length) { const i = el[0].index; setFilter("device", items[i].value, items[i].label); } } } };
+    })(),
+  };
+  for (const [name, cfg] of Object.entries(data)) {
+    cfg.options = { responsive: true, maintainAspectRatio: false, animation: { duration: 250 }, ...cfg.options };
+    if (charts[name] && charts[name].config.type === cfg.type) {
+      charts[name].data = cfg.data; charts[name].options = cfg.options; charts[name].update("none");
+    } else {
+      if (charts[name]) charts[name].destroy();
+      charts[name] = new Chart($(`c-${name}`), cfg);
+    }
+  }
+}
+
+function drawMap(points) {
+  if (!window.L) return;
+  if (!map) {
+    map = L.map("map", { scrollWheelZoom: false, attributionControl: true }).setView([33.3, 44.4], 4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, attribution: "© OpenStreetMap" }).addTo(map);
+    layer = L.layerGroup().addTo(map);
+  }
+  layer.clearLayers();
+  const max = Math.max(1, ...points.map((p) => p.n));
+  for (const p of points) {
+    L.circleMarker([p.lat, p.lon], { radius: 5 + 13 * Math.sqrt(p.n / max), color: css("--card"), weight: 2,
+      fillColor: css("--s1"), fillOpacity: .75 }).bindTooltip(`${esc(p.city || "")}: ${fmt(p.n)}`).addTo(layer);
+  }
+  if (points.length && !map._fitted) { map.fitBounds(points.map((p) => [p.lat, p.lon]), { maxZoom: 7, padding: [20, 20] }); map._fitted = true; }
+}
+
+function visitRow(v) {
+  const place = [v.city, v.country].filter(Boolean).join("، ") || "مكان غير معروف";
+  return `<div class="visit" data-id="${v.id}" tabindex="0" role="button">
+    <span title="${esc(v.device_label)}">${v.icon}</span>
+    <span>${v.flag} ${esc(place)}<span class="sub">${esc(v.isp || v.ip)}</span></span>
+    <span class="hide-sm">${esc(v.model || v.os)}<span class="sub">${esc([v.os, v.browser, v.app && "داخل " + v.app].filter(Boolean).join(" · "))}</span></span>
+    <span class="hide-sm">${esc(v.source)}<span class="sub">${esc(v.path)}</span></span>
+    <span class="hide-sm">${dur(v.duration)}<span class="sub">قرأ ${v.scroll || 0}٪ · ${v.clicks} ضغطة</span></span>
+    <span>${v.online ? '<b class="on">● هسه</b>' : esc(v.ago)}${v.new ? '<span class="tag new">جديد</span>' : ""}${v.bot ? '<span class="tag">بوت</span>' : ""}<span class="sub">${esc(v.time.slice(5))}</span></span>
+  </div>`;
+}
+
+async function loadVisits(append) {
+  const r = await get(`api/visits?${query({ offset: state.offset })}`);
+  $("total").textContent = `(${fmt(r.total)})`;
+  const html = r.visits.map(visitRow).join("");
+  if (append) $("visits").insertAdjacentHTML("beforeend", html);
+  else $("visits").innerHTML = html || `<div class="empty">ماكو زيارات بهالفترة.</div>`;
+  $("more").hidden = state.offset + 50 >= r.total;
+}
+
+async function load() {
+  save(); chips();
+  document.querySelectorAll("#range button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.r === state.range)));
+  $("csv").href = `${P}/export.csv?${query()}`;
+  const s = await get(`api/stats?${query()}`);
+  $("k-visits").textContent = fmt(s.kpi.visits);
+  $("k-visitors").textContent = fmt(s.kpi.visitors);
+  $("k-new").textContent = fmt(s.kpi.new);
+  $("k-per").textContent = fmt(s.kpi.per_visitor);
+  $("k-dur").textContent = dur(s.kpi.avg_duration);
+  $("k-bounce").textContent = `${fmt(s.kpi.bounce)}٪`;
+  $("online").textContent = `${fmt(s.kpi.online)} متصل هسه`;
+  for (const [name, key] of Object.entries(LISTS)) list(name, s[name] || [], key);
+  drawCharts(s);
+  drawMap(s.points);
+  state.offset = 0;
+  await loadVisits(false);
+}
+
+async function openVisit(id) {
+  const v = await get(`api/visit/${id}`);
+  const rows = [
+    ["الوقت", `${v.time} (${v.ago})`], ["المكان", `${v.flag} ${[v.city, v.region, v.country].filter(Boolean).join("، ") || "غير معروف"}`],
+    ["شركة الإنترنت", v.isp], ["IP", `<span class="mono">${esc(v.ip)}</span>`, true],
+    ["الإحداثيات", v.lat != null ? `<a href="https://www.openstreetmap.org/?mlat=${v.lat}&mlon=${v.lon}#map=10/${v.lat}/${v.lon}" target="_blank" rel="noopener">${v.lat}, ${v.lon}</a> (تقريبية)` : "", true],
+    ["الجهاز", `${v.icon} ${v.device_label}`], ["الموبايل/الموديل", v.model], ["النظام", v.os], ["المتصفح", v.browser],
+    ["فتحه من تطبيق", v.app], ["الشاشة", v.screen && `${v.screen} (النافذة ${v.viewport || "?"}, كثافة ${v.dpr || 1})`],
+    ["لمس", v.touch ? `نعم (${v.touch} نقاط)` : ""], ["الوضع الليلي", v.dark ? "مفعّل" : ""],
+    ["اللغة", v.lang], ["المنطقة الزمنية", v.tz], ["الاتصال", v.conn],
+    ["منين جا", v.source], ["الرابط اللي جابه", v.referrer && `<span class="mono">${esc(v.referrer)}</span>`, true],
+    ["حملة/UTM", v.query && `<span class="mono">${esc(v.query)}</span>`, true],
+    ["الصفحة", `${esc(v.path)}${v.title ? ` — ${esc(v.title)}` : ""}`, true], ["بقى بالصفحة", dur(v.duration)],
+    ["قرأ من الصفحة", `${v.scroll || 0}٪`], ["الزائر", `${v.new ? "جديد" : "راجع"} · ${fmt(v.visitor_visits)} زيارة · أول مرة ${esc(v.first_seen)}`, true],
+    ["User-Agent", `<span class="mono">${esc(v.ua)}</span>`, true],
+  ].filter((r) => r[1]);
+  const events = v.events.length ? `<ul class="timeline">${v.events.map((e) =>
+    `<li><time>${esc(e.time)}</time><span>${esc(e.label || e.kind)} <small class="tag">${esc(KINDS[e.kind] || e.kind)}</small>${e.target ? `<span class="sub mono">${esc(e.target)}</span>` : ""}</span></li>`).join("")}</ul>` : `<div class="empty">ما ضغط على شي.</div>`;
+  const history = v.history.length > 1 ? `<ul class="timeline">${v.history.map((h) =>
+    `<li><time>${esc(h.time)}</time><a href="#v=${h.id}">${esc(h.path)}</a> <small class="tag">${esc(h.source)}</small> <small class="tag">${dur(h.duration)}</small></li>`).join("")}</ul>` : "";
+  $("dlg-title").textContent = `زيارة رقم ${v.id}`;
+  $("dlg-body").innerHTML = `<dl>${rows.map(([k, val, raw]) => `<dt>${k}</dt><dd>${raw ? val : esc(val)}</dd>`).join("")}</dl>
+    <div><h2>👆 الضغطات</h2>${events}</div>
+    ${history ? `<div><h2>🕘 زياراته الثانية</h2>${history}<p><button class="btn" id="only-him">اعرض بس زيارات هذا الزائر</button></p></div>` : ""}`;
+  const only = $("only-him");
+  if (only) only.onclick = () => { $("dlg").close(); setFilter("visitor", v.visitor, `${v.flag} ${v.city || v.ip}`); };
+  if (!$("dlg").open) $("dlg").showModal();
+}
+
+$("visits").addEventListener("click", (e) => { const row = e.target.closest(".visit"); if (row) location.hash = `v=${row.dataset.id}`; });
+$("visits").addEventListener("keydown", (e) => { if (e.key === "Enter") { const row = e.target.closest(".visit"); if (row) location.hash = `v=${row.dataset.id}`; } });
+$("more").onclick = () => { state.offset += 50; loadVisits(true); };
+$("dlg-close").onclick = () => $("dlg").close();
+$("dlg").addEventListener("close", () => { if (location.hash) history.replaceState(null, "", location.pathname); });
+function fromHash() { const m = location.hash.match(/v=(\d+)/); if (m) openVisit(m[1]); }
+window.addEventListener("hashchange", fromHash);
+$("range").addEventListener("click", (e) => { if (e.target.dataset.r) { state.range = e.target.dataset.r; state.offset = 0; load(); } });
+let typing;
+$("q").value = state.q || "";
+$("q").addEventListener("input", (e) => { clearTimeout(typing); typing = setTimeout(() => { state.q = e.target.value.trim(); load(); }, 350); });
+$("new").checked = state.new; $("bots").checked = state.bots;
+$("new").onchange = (e) => { state.new = e.target.checked; load(); };
+$("bots").onchange = (e) => { state.bots = e.target.checked; load(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => load());
+
+// stays live: the numbers refresh every 20 seconds while the page is open (not while a visit is open or the list is extended)
+setInterval(() => { if (document.visibilityState === "visible" && !$("dlg").open && state.offset === 0) load(); }, 20000);
+load().then(fromHash);
+</script>
+</body>
+</html>

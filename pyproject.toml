@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "visitor-dashboard"
+version = "0.1.0"
+description = "A password-protected page on your own Flask or Django site that shows every visit (device, place, origin, time, clicks) with charts."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Thanoon Younis Mohammed" }]
+dependencies = ["requests>=2.25"]
+
+[project.optional-dependencies]
+flask = ["flask>=2.0"]
+django = ["django>=3.2"]
+geo = ["maxminddb>=2.0"]
+test = ["pytest", "flask>=2.0", "django>=3.2"]
+
+[project.urls]
+Homepage = "https://github.com/Thanoon12k/visitor-dashboard"
+
+[tool.setuptools]
+packages = ["visitor_dashboard"]
+
+[tool.setuptools.package-data]
+visitor_dashboard = ["static/*"]

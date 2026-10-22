@@ -1,7 +1,8 @@
 """Reading a visit without any service: the device from the User-Agent, and where the visitor came from.
 
 parse(ua) -> {device, os, os_ver, browser, browser_ver, brand, model, app, bot}
-source(referrer, host, utm) -> a short name such as "Google", "Facebook", "Telegram", "مباشر" or the site's domain.
+source(referrer, host, utm) -> a short name such as "Google", "Facebook", "Telegram", "direct", "internal"
+or the site's domain (i18n.py names "direct" and "internal" in the reader's language).
 """
 
 from __future__ import annotations
@@ -98,15 +99,15 @@ def source(referrer: str, host: str = "", utm: str = "") -> str:
     if utm:
         return utm.strip()[:60]
     if not referrer:
-        return "مباشر"
+        return "direct"
     where = urlsplit(referrer)
     ref_host = (where.hostname or "").lower().removeprefix("www.").removeprefix("m.").removeprefix("l.")
     if referrer.startswith("android-app://"):
         ref_host = referrer[len("android-app://"):].split("/")[0]
     if host and ref_host == host.lower().split(":")[0].removeprefix("www."):
-        return "داخلي"
+        return "internal"
     for name, hosts in SOURCES:
         if any(ref_host == h or ref_host.endswith("." + h) or (h.endswith(".") and (ref_host.startswith(h) or f".{h}" in ref_host))
                or (not h.endswith(".") and h in referrer and h.startswith(("android-app", "com.", "org."))) for h in hosts):
             return name
-    return ref_host or "مباشر"
+    return ref_host or "direct"

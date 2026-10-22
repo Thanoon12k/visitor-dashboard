@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="{{LANG}}" dir="{{DIR}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -87,6 +87,7 @@ input[type=search] { font: inherit; padding: 7px 11px; border: 1px solid var(--l
 }
 dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; }
 dialog::backdrop { background: rgb(0 0 0 / .45); }
+.lang-switch { font-weight: 600; }
 .dlg-head { position: sticky; top: 0; background: var(--card); display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .dlg-body { padding: 14px 16px; display: grid; gap: 14px; }
 dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; }
@@ -104,80 +105,128 @@ dd { margin: 0; overflow-wrap: anywhere; }
     <h1>📊 {{TITLE}}</h1>
     <div class="bar-row">
       <span class="live"><span class="dot"></span><span id="online">…</span></span>
+      <button class="btn lang-switch" id="lang" type="button"></button>
       <a class="btn" id="csv" href="#">⬇️ CSV</a>
-      <a class="btn" href="{{PREFIX}}/logout">خروج</a>
+      <a class="btn" href="{{PREFIX}}/logout" data-t="logout"></a>
     </div>
   </header>
 
-  <div class="bar-row" role="toolbar" aria-label="الفلاتر">
+  <div class="bar-row" role="toolbar" data-t-label="filters">
     <div class="seg" id="range">
-      <button data-r="today">اليوم</button><button data-r="7">7 أيام</button><button data-r="30">30 يوم</button>
-      <button data-r="90">3 أشهر</button><button data-r="365">سنة</button><button data-r="all">الكل</button>
+      <button data-r="today" data-t="today"></button><button data-r="7" data-t="d7"></button><button data-r="30" data-t="d30"></button>
+      <button data-r="90" data-t="d90"></button><button data-r="365" data-t="d365"></button><button data-r="all" data-t="all"></button>
     </div>
-    <input type="search" id="q" placeholder="ابحث: IP، مدينة، صفحة، جهاز…" aria-label="بحث">
-    <label class="toggle"><input type="checkbox" id="new"> الجدد بس</label>
-    <label class="toggle"><input type="checkbox" id="bots"> مع البوتات</label>
+    <input type="search" id="q" data-t-placeholder="search" data-t-label="search_label">
+    <label class="toggle"><input type="checkbox" id="new"> <span data-t="only_new"></span></label>
+    <label class="toggle"><input type="checkbox" id="bots"> <span data-t="with_bots"></span></label>
   </div>
   <div class="chips" id="chips"></div>
 
-  <section class="kpis" aria-label="الأرقام">
-    <div class="kpi"><b id="k-visits">–</b><span>زيارة</span></div>
-    <div class="kpi"><b id="k-visitors">–</b><span>زائر</span></div>
-    <div class="kpi"><b id="k-new">–</b><span>زائر جديد</span></div>
-    <div class="kpi"><b id="k-per">–</b><span>صفحة لكل زائر</span></div>
-    <div class="kpi"><b id="k-dur">–</b><span>معدل البقاء</span></div>
-    <div class="kpi"><b id="k-bounce">–</b><span>طلعوا من أول صفحة</span></div>
+  <section class="kpis" data-t-label="numbers">
+    <div class="kpi"><b id="k-visits">–</b><span data-t="k_visits"></span></div>
+    <div class="kpi"><b id="k-visitors">–</b><span data-t="k_visitors"></span></div>
+    <div class="kpi"><b id="k-new">–</b><span data-t="k_new"></span></div>
+    <div class="kpi"><b id="k-per">–</b><span data-t="k_per"></span></div>
+    <div class="kpi"><b id="k-dur">–</b><span data-t="k_dur"></span></div>
+    <div class="kpi"><b id="k-bounce">–</b><span data-t="k_bounce"></span></div>
   </section>
 
   <section class="grid">
     <div class="card wide">
-      <h2>الزيارات باليوم</h2>
-      <div class="legend"><span><i style="background:var(--s1)"></i>زيارات</span><span><i style="background:var(--s2)"></i>زوار</span></div>
-      <div class="chart"><canvas id="c-days" aria-label="الزيارات والزوار باليوم" role="img"></canvas></div>
+      <h2 data-t="per_day"></h2>
+      <div class="legend"><span><i style="background:var(--s1)"></i><span data-t="visits"></span></span><span><i style="background:var(--s2)"></i><span data-t="visitors"></span></span></div>
+      <div class="chart"><canvas id="c-days" role="img" data-t-label="per_day"></canvas></div>
     </div>
     <div class="card">
-      <h2>بأي ساعة يجون (توقيت الموقع)</h2>
-      <div class="chart"><canvas id="c-hours" aria-label="الزيارات حسب الساعة" role="img"></canvas></div>
+      <h2 data-t="by_hour"></h2>
+      <div class="chart"><canvas id="c-hours" role="img" data-t-label="by_hour"></canvas></div>
     </div>
     <div class="card">
-      <h2>نوع الجهاز</h2>
-      <div class="chart"><canvas id="c-devices" aria-label="نوع الجهاز" role="img"></canvas></div>
+      <h2 data-t="device_type"></h2>
+      <div class="chart"><canvas id="c-devices" role="img" data-t-label="device_type"></canvas></div>
     </div>
-    <div class="card"><h2>🌍 الدول</h2><ul class="list" id="l-countries"></ul></div>
-    <div class="card"><h2>🏙️ المدن</h2><ul class="list" id="l-cities"></ul></div>
-    <div class="card"><h2>🔗 منين جاو</h2><ul class="list" id="l-sources"></ul></div>
-    <div class="card"><h2>📄 الصفحات</h2><ul class="list" id="l-pages"></ul></div>
-    <div class="card"><h2>📶 شركة الإنترنت</h2><ul class="list" id="l-isps"></ul></div>
-    <div class="card"><h2>⚙️ النظام</h2><ul class="list" id="l-os"></ul></div>
-    <div class="card"><h2>🌐 المتصفح</h2><ul class="list" id="l-browsers"></ul></div>
-    <div class="card"><h2>📱 نوع الموبايل</h2><ul class="list" id="l-brands"></ul></div>
-    <div class="card"><h2>📲 فتحوه من تطبيق</h2><ul class="list" id="l-apps"></ul></div>
-    <div class="card"><h2>👆 أكثر الضغطات</h2><ul class="list" id="l-clicks"></ul></div>
-    <div class="card"><h2>🗣️ اللغة</h2><ul class="list" id="l-languages"></ul></div>
-    <div class="card"><h2>🖥️ حجم الشاشة</h2><ul class="list" id="l-screens"></ul></div>
-    <div class="card wide"><h2>🗺️ الخريطة (تقريبية، على مستوى المدينة)</h2><div id="map"></div></div>
+    <div class="card"><h2>🌍 <span data-t="countries"></span></h2><ul class="list" id="l-countries"></ul></div>
+    <div class="card"><h2>🏙️ <span data-t="cities"></span></h2><ul class="list" id="l-cities"></ul></div>
+    <div class="card"><h2>🔗 <span data-t="sources"></span></h2><ul class="list" id="l-sources"></ul></div>
+    <div class="card"><h2>📄 <span data-t="pages"></span></h2><ul class="list" id="l-pages"></ul></div>
+    <div class="card"><h2>📶 <span data-t="isps"></span></h2><ul class="list" id="l-isps"></ul></div>
+    <div class="card"><h2>⚙️ <span data-t="os"></span></h2><ul class="list" id="l-os"></ul></div>
+    <div class="card"><h2>🌐 <span data-t="browsers"></span></h2><ul class="list" id="l-browsers"></ul></div>
+    <div class="card"><h2>📱 <span data-t="brands"></span></h2><ul class="list" id="l-brands"></ul></div>
+    <div class="card"><h2>📲 <span data-t="apps"></span></h2><ul class="list" id="l-apps"></ul></div>
+    <div class="card"><h2>👆 <span data-t="clicks"></span></h2><ul class="list" id="l-clicks"></ul></div>
+    <div class="card"><h2>🗣️ <span data-t="languages"></span></h2><ul class="list" id="l-languages"></ul></div>
+    <div class="card"><h2>🖥️ <span data-t="screens"></span></h2><ul class="list" id="l-screens"></ul></div>
+    <div class="card wide"><h2>🗺️ <span data-t="map"></span></h2><div id="map"></div></div>
   </section>
 
-  <section class="card" aria-label="كل زيارة">
-    <h2>كل زيارة <span id="total" style="color:var(--ink-3)"></span></h2>
+  <section class="card" data-t-label="every_visit">
+    <h2><span data-t="every_visit"></span> <span id="total" style="color:var(--ink-3)"></span></h2>
     <div class="visits" id="visits"></div>
-    <div class="more"><button class="btn" id="more" hidden>عرض المزيد</button></div>
+    <div class="more"><button class="btn" id="more" hidden data-t="more"></button></div>
   </section>
 </main>
 
 <dialog id="dlg" aria-labelledby="dlg-title">
-  <div class="dlg-head"><b id="dlg-title">تفاصيل الزيارة</b><button class="btn" id="dlg-close" aria-label="سكّر">✕</button></div>
+  <div class="dlg-head"><b id="dlg-title"></b><button class="btn" id="dlg-close" data-t-label="close">✕</button></div>
   <div class="dlg-body" id="dlg-body"></div>
 </dialog>
 
 <script>
-const P = "{{PREFIX}}";
+const P = "{{PREFIX}}", LANG = "{{LANG}}";
+const WORDS = {
+  en: {
+    logout: "Log out", filters: "Filters", today: "Today", d7: "7 days", d30: "30 days", d90: "3 months", d365: "Year", all: "All",
+    search: "Search: IP, city, page, device…", search_label: "Search", only_new: "New only", with_bots: "Include bots",
+    numbers: "Numbers", k_visits: "Visits", k_visitors: "Visitors", k_new: "New visitors", k_per: "Pages per visitor",
+    k_dur: "Avg. time on page", k_bounce: "Left after one page", per_day: "Visits per day", visits: "Visits", visitors: "Visitors",
+    by_hour: "Visits by hour (site time)", device_type: "Device type", countries: "Countries", cities: "Cities",
+    sources: "Where they came from", pages: "Pages", isps: "Internet provider", os: "Operating system", browsers: "Browser",
+    brands: "Phone maker", apps: "Opened inside an app", clicks: "Top clicks", languages: "Language", screens: "Screen size",
+    map: "Map (approximate, city level)", every_visit: "Every visit", more: "Show more", close: "Close",
+    online: "{n} online now", no_data: "No data yet", no_visits: "No visits in this period.", unknown: "Unknown place",
+    hour: "{h}:00", inside: "in {app}", read: "read {n}%", n_clicks: "{n} clicks", n_clicks_one: "1 click", now: "now", new: "new", bot: "bot",
+    remove_filter: "Remove filter", visit_n: "Visit #{n}", s: "s", m: "m", h: "h", pct: "{n}%",
+    f_country_code: "Country", f_city: "City", f_source: "From", f_path: "Page", f_isp: "Provider", f_os: "System",
+    f_browser: "Browser", f_brand: "Phone", f_app: "App", f_lang: "Language", f_screen: "Screen", f_device: "Device", f_visitor: "Visitor",
+    k_click: "click", k_link: "link", k_outbound: "outbound", k_download: "download", k_contact: "contact",
+    d_time: "Time", d_place: "Place", d_isp: "Internet provider", d_coords: "Coordinates", d_approx: "(approximate)",
+    d_device: "Device", d_model: "Phone / model", d_os: "System", d_browser: "Browser", d_app: "Opened inside", d_screen: "Screen",
+    d_screen_v: "{s} (window {v}, density {d})", d_touch: "Touch", d_touch_v: "yes ({n} points)", d_dark: "Dark mode", d_on: "on",
+    d_lang: "Language", d_tz: "Time zone", d_conn: "Connection", d_source: "From", d_referrer: "Referring link",
+    d_utm: "Campaign / UTM", d_page: "Page", d_dur: "Time on page", d_scroll: "Read of the page", d_visitor: "Visitor",
+    d_visitor_v: "{kind} · {n} visits · first seen {first}", d_visitor_v_one: "{kind} · first visit {first}", returning: "returning", d_clicks: "Clicks", d_none: "No clicks.",
+    d_history: "Their other visits", d_only: "Show only this visitor's visits",
+  },
+  ar: {
+    logout: "خروج", filters: "الفلاتر", today: "اليوم", d7: "7 أيام", d30: "30 يوم", d90: "3 أشهر", d365: "سنة", all: "الكل",
+    search: "ابحث: IP، مدينة، صفحة، جهاز…", search_label: "بحث", only_new: "الجدد بس", with_bots: "مع البوتات",
+    numbers: "الأرقام", k_visits: "زيارة", k_visitors: "زائر", k_new: "زائر جديد", k_per: "صفحة لكل زائر",
+    k_dur: "معدل البقاء", k_bounce: "طلعوا من أول صفحة", per_day: "الزيارات باليوم", visits: "زيارات", visitors: "زوار",
+    by_hour: "بأي ساعة يجون (توقيت الموقع)", device_type: "نوع الجهاز", countries: "الدول", cities: "المدن",
+    sources: "منين جاو", pages: "الصفحات", isps: "شركة الإنترنت", os: "النظام", browsers: "المتصفح",
+    brands: "نوع الموبايل", apps: "فتحوه من تطبيق", clicks: "أكثر الضغطات", languages: "اللغة", screens: "حجم الشاشة",
+    map: "الخريطة (تقريبية، على مستوى المدينة)", every_visit: "كل زيارة", more: "عرض المزيد", close: "سكّر",
+    online: "{n} متصل هسه", no_data: "ماكو بيانات بعد", no_visits: "ماكو زيارات بهالفترة.", unknown: "مكان غير معروف",
+    hour: "الساعة {h}:00", inside: "داخل {app}", read: "قرأ {n}٪", n_clicks: "{n} ضغطة", now: "هسه", new: "جديد", bot: "بوت",
+    remove_filter: "شيل الفلتر", visit_n: "زيارة رقم {n}", s: "ث", m: "د", h: "س", pct: "{n}٪",
+    f_country_code: "الدولة", f_city: "المدينة", f_source: "منين", f_path: "الصفحة", f_isp: "الشركة", f_os: "النظام",
+    f_browser: "المتصفح", f_brand: "الموبايل", f_app: "التطبيق", f_lang: "اللغة", f_screen: "الشاشة", f_device: "الجهاز", f_visitor: "الزائر",
+    k_click: "ضغطة", k_link: "رابط", k_outbound: "رابط خارجي", k_download: "تحميل", k_contact: "تواصل",
+    d_time: "الوقت", d_place: "المكان", d_isp: "شركة الإنترنت", d_coords: "الإحداثيات", d_approx: "(تقريبية)",
+    d_device: "الجهاز", d_model: "الموبايل/الموديل", d_os: "النظام", d_browser: "المتصفح", d_app: "فتحه من تطبيق", d_screen: "الشاشة",
+    d_screen_v: "{s} (النافذة {v}، كثافة {d})", d_touch: "لمس", d_touch_v: "نعم ({n} نقاط)", d_dark: "الوضع الليلي", d_on: "مفعّل",
+    d_lang: "اللغة", d_tz: "المنطقة الزمنية", d_conn: "الاتصال", d_source: "منين جا", d_referrer: "الرابط اللي جابه",
+    d_utm: "حملة/UTM", d_page: "الصفحة", d_dur: "بقى بالصفحة", d_scroll: "قرأ من الصفحة", d_visitor: "الزائر",
+    d_visitor_v: "{kind} · {n} زيارة · أول مرة {first}", returning: "راجع", d_clicks: "الضغطات", d_none: "ما ضغط على شي.",
+    d_history: "زياراته الثانية", d_only: "اعرض بس زيارات هذا الزائر",
+  },
+};
+const T = (key, values = {}) => (values.n === 1 || values.n === "1") && WORDS[LANG][key + "_one"] ? T2(key + "_one", values) : T2(key, values);
+const T2 = (key, values = {}) => (WORDS[LANG][key] ?? WORDS.en[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => values[k] ?? "");
 const LISTS = { countries: "country_code", cities: "city", sources: "source", pages: "path", isps: "isp", os: "os",
                 browsers: "browser", brands: "brand", apps: "app", languages: "lang", screens: "screen", clicks: null };
-const LABELS = { country_code: "الدولة", city: "المدينة", source: "منين", path: "الصفحة", isp: "الشركة", os: "النظام",
-                 browser: "المتصفح", brand: "الموبايل", app: "التطبيق", lang: "اللغة", screen: "الشاشة", device: "الجهاز", visitor: "الزائر" };
-const KINDS = { click: "ضغطة", link: "رابط", outbound: "رابط خارجي", download: "تحميل", contact: "تواصل" };
-const DEVICE_ORDER = ["موبايل", "كمبيوتر", "تابلت", "بوت"];
+const DEVICE_ORDER = ["mobile", "desktop", "tablet", "bot"];
 let state = { range: "7", q: "", new: false, bots: false, filters: {}, offset: 0 };
 try { Object.assign(state, JSON.parse(localStorage.getItem("vd-state") || "{}"), { offset: 0 }); } catch (e) {}
 const charts = {};
@@ -186,11 +235,25 @@ let map, layer, filterNames = {};
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const fmt = (n) => Number(n).toLocaleString("ar-IQ");
-const dur = (s) => !s ? "–" : s < 60 ? `${s} ث` : s < 3600 ? `${Math.floor(s / 60)} د ${s % 60} ث` : `${Math.floor(s / 3600)} س ${Math.floor(s % 3600 / 60)} د`;
+const fmt = (n) => Number(n).toLocaleString(LANG === "ar" ? "ar-IQ" : "en-US");
+const pct = (n) => T("pct", { n: fmt(n) });
+const dur = (s) => !s ? "–" : s < 60 ? `${s} ${T("s")}` : s < 3600 ? `${Math.floor(s / 60)} ${T("m")} ${s % 60} ${T("s")}`
+  : `${Math.floor(s / 3600)} ${T("h")} ${Math.floor(s % 3600 / 60)} ${T("m")}`;
+const rtl = LANG === "ar";
+
+// the page's fixed words
+document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = T(el.dataset.t); });
+document.querySelectorAll("[data-t-label]").forEach((el) => el.setAttribute("aria-label", T(el.dataset.tLabel)));
+document.querySelectorAll("[data-t-placeholder]").forEach((el) => el.setAttribute("placeholder", T(el.dataset.tPlaceholder)));
+$("lang").textContent = LANG === "ar" ? "🌐 EN" : "🌐 AR";
+$("lang").title = LANG === "ar" ? "English" : "Arabic";
+$("lang").onclick = () => {
+  document.cookie = `vd_lang=${LANG === "ar" ? "en" : "ar"}; path=${P}; max-age=${5 * 365 * 86400}; samesite=lax`;
+  location.reload();
+};
 
 function query(extra = {}) {
-  const p = new URLSearchParams({ range: state.range, ...state.filters, ...extra });
+  const p = new URLSearchParams({ range: state.range, ...state.filters, ...extra, ui: LANG });
   if (state.q) p.set("q", state.q);
   if (state.new) p.set("new", "1");
   if (state.bots) p.set("bots", "1");
@@ -209,7 +272,7 @@ function setFilter(key, value, label) {
 }
 function chips() {
   $("chips").innerHTML = Object.entries(state.filters).map(([k, v]) =>
-    `<span class="chip">${esc(LABELS[k] || k)}: ${esc(filterNames[k] || v)} <button data-k="${esc(k)}" aria-label="شيل الفلتر">×</button></span>`).join("");
+    `<span class="chip">${esc(T("f_" + k))}: ${esc(filterNames[k] || v)} <button data-k="${esc(k)}" aria-label="${esc(T("remove_filter"))}">×</button></span>`).join("");
 }
 $("chips").addEventListener("click", (e) => {
   const k = e.target.dataset && e.target.dataset.k;
@@ -218,13 +281,13 @@ $("chips").addEventListener("click", (e) => {
 
 function list(id, items, key) {
   const el = $(`l-${id}`);
-  if (!items.length) { el.innerHTML = `<li class="static empty">ماكو بيانات بعد</li>`; return; }
+  if (!items.length) { el.innerHTML = `<li class="static empty">${esc(T("no_data"))}</li>`; return; }
   const max = Math.max(...items.map((i) => i.n)), total = items.reduce((a, i) => a + i.n, 0);
   el.innerHTML = items.map((i) => {
     const label = i.label || i.value;
-    return `<li class="${key ? "" : "static"}" data-v="${esc(i.value ?? "")}" data-l="${esc(label)}" title="${esc(label)}: ${fmt(i.n)} (${Math.round(100 * i.n / total)}٪)">
+    return `<li class="${key ? "" : "static"}" data-v="${esc(i.value ?? "")}" data-l="${esc(label)}" title="${esc(label)}: ${fmt(i.n)} (${pct(Math.round(100 * i.n / total))})">
       <div class="fill" style="width:${(100 * i.n / max).toFixed(1)}%"></div>
-      <span>${esc(label)}${i.kind && i.kind !== "click" ? ` <small class="tag">${esc(KINDS[i.kind] || i.kind)}</small>` : ""}</span><span class="n">${fmt(i.n)}</span></li>`;
+      <span>${esc(label)}${i.kind && i.kind !== "click" ? ` <small class="tag">${esc(T("k_" + i.kind))}</small>` : ""}</span><span class="n">${fmt(i.n)}</span></li>`;
   }).join("");
   if (key) el.onclick = (e) => { const li = e.target.closest("li[data-v]"); if (li) setFilter(key, li.dataset.v, li.dataset.l); };
 }
@@ -234,26 +297,26 @@ function axes() {
   return { x: { grid: { display: false }, ticks, border: { color: css("--line") } },
            y: { beginAtZero: true, grid, ticks: { ...ticks, precision: 0 }, border: { display: false } } };
 }
-const tooltip = { rtl: true, textDirection: "rtl", backgroundColor: "#0b0b0bE6", padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4 };
+const tooltip = { rtl, textDirection: rtl ? "rtl" : "ltr", backgroundColor: "#0b0b0bE6", padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4 };
 
 function drawCharts(s) {
   Chart.defaults.font.family = "system-ui, Segoe UI, Tahoma, sans-serif";
   const days = s.days.map((d) => d.day.slice(5));
+  const line = (label, key, color) => ({ label, data: s.days.map((d) => d[key]), borderColor: css(color), backgroundColor: css(color),
+    borderWidth: 2, pointRadius: days.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: .25 });
   const data = {
-    days: { type: "line", data: { labels: days, datasets: [
-      { label: "زيارات", data: s.days.map((d) => d.visits), borderColor: css("--s1"), backgroundColor: css("--s1"), borderWidth: 2, pointRadius: days.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: .25 },
-      { label: "زوار", data: s.days.map((d) => d.visitors), borderColor: css("--s2"), backgroundColor: css("--s2"), borderWidth: 2, pointRadius: days.length > 40 ? 0 : 3, pointHoverRadius: 5, tension: .25 }] },
+    days: { type: "line", data: { labels: days, datasets: [line(T("visits"), "visits", "--s1"), line(T("visitors"), "visitors", "--s2")] },
       options: { interaction: { mode: "index", intersect: false }, plugins: { legend: { display: false }, tooltip }, scales: axes() } },
     hours: { type: "bar", data: { labels: s.hours.map((_, h) => String(h)), datasets: [
-      { label: "زيارات", data: s.hours, backgroundColor: css("--s1"), borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: "bottom", maxBarThickness: 18 }] },
-      options: { plugins: { legend: { display: false }, tooltip: { ...tooltip, callbacks: { title: (i) => `الساعة ${i[0].label}:00` } } }, scales: axes() } },
+      { label: T("visits"), data: s.hours, backgroundColor: css("--s1"), borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: "bottom", maxBarThickness: 18 }] },
+      options: { plugins: { legend: { display: false }, tooltip: { ...tooltip, callbacks: { title: (i) => T("hour", { h: i[0].label }) } } }, scales: axes() } },
     devices: (() => {
-      const items = [...s.devices].sort((a, b) => DEVICE_ORDER.indexOf(a.label) - DEVICE_ORDER.indexOf(b.label));
-      const colors = { "موبايل": css("--s1"), "كمبيوتر": css("--s2"), "تابلت": css("--s3"), "بوت": css("--s4") };
+      const items = [...s.devices].sort((a, b) => DEVICE_ORDER.indexOf(a.value) - DEVICE_ORDER.indexOf(b.value));
+      const colors = { mobile: css("--s1"), desktop: css("--s2"), tablet: css("--s3"), bot: css("--s4") };
       const total = items.reduce((a, i) => a + i.n, 0) || 1;
-      return { type: "doughnut", data: { labels: items.map((i) => `${i.label} ${Math.round(100 * i.n / total)}٪`), datasets: [
-        { data: items.map((i) => i.n), backgroundColor: items.map((i) => colors[i.label] || css("--ink-3")), borderColor: css("--card"), borderWidth: 2, _values: items.map((i) => i.value) }] },
-        options: { cutout: "62%", plugins: { legend: { position: "bottom", rtl: true, labels: { color: css("--ink-2"), usePointStyle: true, pointStyle: "rectRounded" } }, tooltip },
+      return { type: "doughnut", data: { labels: items.map((i) => `${i.label} ${pct(Math.round(100 * i.n / total))}`), datasets: [
+        { data: items.map((i) => i.n), backgroundColor: items.map((i) => colors[i.value] || css("--ink-3")), borderColor: css("--card"), borderWidth: 2 }] },
+        options: { cutout: "62%", plugins: { legend: { position: "bottom", rtl, labels: { color: css("--ink-2"), usePointStyle: true, pointStyle: "rectRounded" } }, tooltip },
                    onClick: (_, el) => { if (el.length) { const i = el[0].index; setFilter("device", items[i].value, items[i].label); } } } };
     })(),
   };
@@ -272,7 +335,11 @@ function drawMap(points) {
   if (!window.L) return;
   if (!map) {
     map = L.map("map", { scrollWheelZoom: false, attributionControl: true }).setView([33.3, 44.4], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 12, attribution: "© OpenStreetMap" }).addTo(map);
+    // Esri's gray canvas: no key needed, place names in English, a dark version for dark mode
+    const tone = matchMedia("(prefers-color-scheme: dark)").matches && document.documentElement.dataset.theme !== "light" ? "Dark" : "Light";
+    const esri = (name) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${tone}_Gray_${name}/MapServer/tile/{z}/{y}/{x}`;
+    L.tileLayer(esri("Base"), { maxZoom: 12, attribution: "Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap" }).addTo(map);
+    L.tileLayer(esri("Reference"), { maxZoom: 12 }).addTo(map);
     layer = L.layerGroup().addTo(map);
   }
   layer.clearLayers();
@@ -284,15 +351,16 @@ function drawMap(points) {
   if (points.length && !map._fitted) { map.fitBounds(points.map((p) => [p.lat, p.lon]), { maxZoom: 7, padding: [20, 20] }); map._fitted = true; }
 }
 
+const comma = () => (rtl ? "، " : ", ");
 function visitRow(v) {
-  const place = [v.city, v.country].filter(Boolean).join("، ") || "مكان غير معروف";
+  const place = [v.city, v.country].filter(Boolean).join(comma()) || T("unknown");
   return `<div class="visit" data-id="${v.id}" tabindex="0" role="button">
     <span title="${esc(v.device_label)}">${v.icon}</span>
     <span>${v.flag} ${esc(place)}<span class="sub">${esc(v.isp || v.ip)}</span></span>
-    <span class="hide-sm">${esc(v.model || v.os)}<span class="sub">${esc([v.os, v.browser, v.app && "داخل " + v.app].filter(Boolean).join(" · "))}</span></span>
+    <span class="hide-sm">${esc(v.model || v.os)}<span class="sub">${esc([v.os, v.browser, v.app && T("inside", { app: v.app })].filter(Boolean).join(" · "))}</span></span>
     <span class="hide-sm">${esc(v.source)}<span class="sub">${esc(v.path)}</span></span>
-    <span class="hide-sm">${dur(v.duration)}<span class="sub">قرأ ${v.scroll || 0}٪ · ${v.clicks} ضغطة</span></span>
-    <span>${v.online ? '<b class="on">● هسه</b>' : esc(v.ago)}${v.new ? '<span class="tag new">جديد</span>' : ""}${v.bot ? '<span class="tag">بوت</span>' : ""}<span class="sub">${esc(v.time.slice(5))}</span></span>
+    <span class="hide-sm">${dur(v.duration)}<span class="sub">${esc(T("read", { n: fmt(v.scroll || 0) }))} · ${esc(T("n_clicks", { n: v.clicks === 1 ? 1 : fmt(v.clicks) }))}</span></span>
+    <span>${v.online ? `<b class="on">● ${esc(T("now"))}</b>` : esc(v.ago)}${v.new ? `<span class="tag new">${esc(T("new"))}</span>` : ""}${v.bot ? `<span class="tag">${esc(T("bot"))}</span>` : ""}<span class="sub">${esc(v.time.slice(5))}</span></span>
   </div>`;
 }
 
@@ -301,7 +369,7 @@ async function loadVisits(append) {
   $("total").textContent = `(${fmt(r.total)})`;
   const html = r.visits.map(visitRow).join("");
   if (append) $("visits").insertAdjacentHTML("beforeend", html);
-  else $("visits").innerHTML = html || `<div class="empty">ماكو زيارات بهالفترة.</div>`;
+  else $("visits").innerHTML = html || `<div class="empty">${esc(T("no_visits"))}</div>`;
   $("more").hidden = state.offset + 50 >= r.total;
 }
 
@@ -315,8 +383,8 @@ async function load() {
   $("k-new").textContent = fmt(s.kpi.new);
   $("k-per").textContent = fmt(s.kpi.per_visitor);
   $("k-dur").textContent = dur(s.kpi.avg_duration);
-  $("k-bounce").textContent = `${fmt(s.kpi.bounce)}٪`;
-  $("online").textContent = `${fmt(s.kpi.online)} متصل هسه`;
+  $("k-bounce").textContent = pct(s.kpi.bounce);
+  $("online").textContent = T("online", { n: fmt(s.kpi.online) });
   for (const [name, key] of Object.entries(LISTS)) list(name, s[name] || [], key);
   drawCharts(s);
   drawMap(s.points);
@@ -325,29 +393,30 @@ async function load() {
 }
 
 async function openVisit(id) {
-  const v = await get(`api/visit/${id}`);
+  const v = await get(`api/visit/${id}?ui=${LANG}`);
   const rows = [
-    ["الوقت", `${v.time} (${v.ago})`], ["المكان", `${v.flag} ${[v.city, v.region, v.country].filter(Boolean).join("، ") || "غير معروف"}`],
-    ["شركة الإنترنت", v.isp], ["IP", `<span class="mono">${esc(v.ip)}</span>`, true],
-    ["الإحداثيات", v.lat != null ? `<a href="https://www.openstreetmap.org/?mlat=${v.lat}&mlon=${v.lon}#map=10/${v.lat}/${v.lon}" target="_blank" rel="noopener">${v.lat}, ${v.lon}</a> (تقريبية)` : "", true],
-    ["الجهاز", `${v.icon} ${v.device_label}`], ["الموبايل/الموديل", v.model], ["النظام", v.os], ["المتصفح", v.browser],
-    ["فتحه من تطبيق", v.app], ["الشاشة", v.screen && `${v.screen} (النافذة ${v.viewport || "?"}, كثافة ${v.dpr || 1})`],
-    ["لمس", v.touch ? `نعم (${v.touch} نقاط)` : ""], ["الوضع الليلي", v.dark ? "مفعّل" : ""],
-    ["اللغة", v.lang], ["المنطقة الزمنية", v.tz], ["الاتصال", v.conn],
-    ["منين جا", v.source], ["الرابط اللي جابه", v.referrer && `<span class="mono">${esc(v.referrer)}</span>`, true],
-    ["حملة/UTM", v.query && `<span class="mono">${esc(v.query)}</span>`, true],
-    ["الصفحة", `${esc(v.path)}${v.title ? ` — ${esc(v.title)}` : ""}`, true], ["بقى بالصفحة", dur(v.duration)],
-    ["قرأ من الصفحة", `${v.scroll || 0}٪`], ["الزائر", `${v.new ? "جديد" : "راجع"} · ${fmt(v.visitor_visits)} زيارة · أول مرة ${esc(v.first_seen)}`, true],
+    ["d_time", `${v.time} (${v.ago})`], ["d_place", `${v.flag} ${[v.city, v.region, v.country].filter(Boolean).join(comma()) || T("unknown")}`],
+    ["d_isp", v.isp], ["IP", `<span class="mono">${esc(v.ip)}</span>`, true],
+    ["d_coords", v.lat != null ? `<a href="https://www.openstreetmap.org/?mlat=${v.lat}&mlon=${v.lon}#map=10/${v.lat}/${v.lon}" target="_blank" rel="noopener">${v.lat}, ${v.lon}</a> ${esc(T("d_approx"))}` : "", true],
+    ["d_device", `${v.icon} ${v.device_label}`], ["d_model", v.model], ["d_os", v.os], ["d_browser", v.browser],
+    ["d_app", v.app], ["d_screen", v.screen && T("d_screen_v", { s: v.screen, v: v.viewport || "?", d: v.dpr || 1 })],
+    ["d_touch", v.touch ? T("d_touch_v", { n: v.touch }) : ""], ["d_dark", v.dark ? T("d_on") : ""],
+    ["d_lang", v.lang], ["d_tz", v.tz], ["d_conn", v.conn],
+    ["d_source", v.source], ["d_referrer", v.referrer && `<span class="mono">${esc(v.referrer)}</span>`, true],
+    ["d_utm", v.query && `<span class="mono">${esc(v.query)}</span>`, true],
+    ["d_page", `${esc(v.path)}${v.title ? ` — ${esc(v.title)}` : ""}`, true], ["d_dur", dur(v.duration)],
+    ["d_scroll", pct(v.scroll || 0)],
+    ["d_visitor", T("d_visitor_v", { kind: v.new ? T("new") : T("returning"), n: v.visitor_visits === 1 ? 1 : fmt(v.visitor_visits), first: v.first_seen })],
     ["User-Agent", `<span class="mono">${esc(v.ua)}</span>`, true],
   ].filter((r) => r[1]);
   const events = v.events.length ? `<ul class="timeline">${v.events.map((e) =>
-    `<li><time>${esc(e.time)}</time><span>${esc(e.label || e.kind)} <small class="tag">${esc(KINDS[e.kind] || e.kind)}</small>${e.target ? `<span class="sub mono">${esc(e.target)}</span>` : ""}</span></li>`).join("")}</ul>` : `<div class="empty">ما ضغط على شي.</div>`;
+    `<li><time>${esc(e.time)}</time><span>${esc(e.label || e.kind)} <small class="tag">${esc(T("k_" + e.kind))}</small>${e.target ? `<span class="sub mono">${esc(e.target)}</span>` : ""}</span></li>`).join("")}</ul>` : `<div class="empty">${esc(T("d_none"))}</div>`;
   const history = v.history.length > 1 ? `<ul class="timeline">${v.history.map((h) =>
     `<li><time>${esc(h.time)}</time><a href="#v=${h.id}">${esc(h.path)}</a> <small class="tag">${esc(h.source)}</small> <small class="tag">${dur(h.duration)}</small></li>`).join("")}</ul>` : "";
-  $("dlg-title").textContent = `زيارة رقم ${v.id}`;
-  $("dlg-body").innerHTML = `<dl>${rows.map(([k, val, raw]) => `<dt>${k}</dt><dd>${raw ? val : esc(val)}</dd>`).join("")}</dl>
-    <div><h2>👆 الضغطات</h2>${events}</div>
-    ${history ? `<div><h2>🕘 زياراته الثانية</h2>${history}<p><button class="btn" id="only-him">اعرض بس زيارات هذا الزائر</button></p></div>` : ""}`;
+  $("dlg-title").textContent = T("visit_n", { n: v.id });
+  $("dlg-body").innerHTML = `<dl>${rows.map(([k, val, raw]) => `<dt>${esc(T(k))}</dt><dd>${raw ? val : esc(val)}</dd>`).join("")}</dl>
+    <div><h2>👆 ${esc(T("d_clicks"))}</h2>${events}</div>
+    ${history ? `<div><h2>🕘 ${esc(T("d_history"))}</h2>${history}<p><button class="btn" id="only-him">${esc(T("d_only"))}</button></p></div>` : ""}`;
   const only = $("only-him");
   if (only) only.onclick = () => { $("dlg").close(); setFilter("visitor", v.visitor, `${v.flag} ${v.city || v.ip}`); };
   if (!$("dlg").open) $("dlg").showModal();

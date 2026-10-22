@@ -30,7 +30,8 @@ its details, plus charts. No AI, no paid service, no tracking company: the data 
 ![One visit](docs/visit.png)
 
 - Refreshes itself every 20 seconds; export to Excel (CSV)
-- Works on phones and in dark mode; the interface is in Arabic (right-to-left)
+- Works on phones and in dark mode
+- English by default, with Arabic (right-to-left) one click away (the 🌐 button), or set `lang="ar"`
 
 ## Install
 
@@ -76,7 +77,8 @@ automatically; your templates don't change.
 | `geo_dir` | | Folder with the location database (see below) |
 | `geo_online` | `True` | Look places up online when there is no database |
 | `keep_days` | | Delete visits older than this many days |
-| `title` | `زوّار الموقع` | The dashboard's title |
+| `lang` | `"en"` | The dashboard's language: `"en"` or `"ar"` (each viewer can switch with the 🌐 button) |
+| `title` | `Site visitors` | The dashboard's title |
 
 ### Leave out your own visits
 

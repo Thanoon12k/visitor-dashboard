@@ -17,36 +17,7 @@ import requests
 
 log = logging.getLogger("visitor_dashboard")
 FIELDS = ("country_code", "country", "region", "city", "isp", "lat", "lon")
-# Arabic names (the online services answer in English): countries by code, and Iraq's cities and governorates
-AR_COUNTRIES = {
-    "IQ": "العراق", "SA": "السعودية", "AE": "الإمارات", "KW": "الكويت", "QA": "قطر", "BH": "البحرين", "OM": "عُمان",
-    "YE": "اليمن", "JO": "الأردن", "SY": "سوريا", "LB": "لبنان", "PS": "فلسطين", "EG": "مصر", "LY": "ليبيا", "TN": "تونس",
-    "DZ": "الجزائر", "MA": "المغرب", "SD": "السودان", "MR": "موريتانيا", "SO": "الصومال", "TR": "تركيا", "IR": "إيران",
-    "US": "أمريكا", "GB": "بريطانيا", "DE": "ألمانيا", "FR": "فرنسا", "NL": "هولندا", "SE": "السويد", "NO": "النرويج",
-    "DK": "الدنمارك", "FI": "فنلندا", "BE": "بلجيكا", "CH": "سويسرا", "AT": "النمسا", "IT": "إيطاليا", "ES": "إسبانيا",
-    "PT": "البرتغال", "GR": "اليونان", "PL": "بولندا", "RO": "رومانيا", "UA": "أوكرانيا", "RU": "روسيا", "IE": "إيرلندا",
-    "LT": "ليتوانيا", "CZ": "التشيك", "HU": "هنغاريا", "BG": "بلغاريا", "CY": "قبرص", "CA": "كندا", "MX": "المكسيك",
-    "BR": "البرازيل", "AU": "أستراليا", "NZ": "نيوزيلندا", "IN": "الهند", "PK": "باكستان", "BD": "بنغلاديش",
-    "AF": "أفغانستان", "CN": "الصين", "JP": "اليابان", "KR": "كوريا الجنوبية", "SG": "سنغافورة", "MY": "ماليزيا",
-    "ID": "إندونيسيا", "HK": "هونغ كونغ", "TW": "تايوان", "VN": "فيتنام", "TH": "تايلاند", "PH": "الفلبين",
-    "AZ": "أذربيجان", "AM": "أرمينيا", "GE": "جورجيا", "KZ": "كازاخستان", "UZ": "أوزبكستان", "NG": "نيجيريا",
-    "ZA": "جنوب أفريقيا", "KE": "كينيا", "ET": "إثيوبيا", "IL": "إسرائيل",
-}
-AR_CITIES = {
-    "baghdad": "بغداد", "mosul": "الموصل", "erbil": "أربيل", "arbil": "أربيل", "basra": "البصرة", "basrah": "البصرة",
-    "sulaymaniyah": "السليمانية", "as sulaymaniyah": "السليمانية", "kirkuk": "كركوك", "duhok": "دهوك", "dahuk": "دهوك",
-    "najaf": "النجف", "an najaf": "النجف", "karbala": "كربلاء", "hillah": "الحلة", "al hillah": "الحلة", "babylon": "بابل",
-    "nasiriyah": "الناصرية", "an nasiriyah": "الناصرية", "dhi qar": "ذي قار", "amarah": "العمارة", "al amarah": "العمارة",
-    "maysan": "ميسان", "kut": "الكوت", "al kut": "الكوت", "wasit": "واسط", "diwaniyah": "الديوانية", "ad diwaniyah": "الديوانية",
-    "al-qadisiyah": "القادسية", "samawah": "السماوة", "as samawah": "السماوة", "muthanna": "المثنى", "ramadi": "الرمادي",
-    "ar ramadi": "الرمادي", "anbar": "الأنبار", "al anbar": "الأنبار", "fallujah": "الفلوجة", "baqubah": "بعقوبة",
-    "diyala": "ديالى", "tikrit": "تكريت", "salah ad din": "صلاح الدين", "samarra": "سامراء", "nineveh": "نينوى",
-    "ninawa": "نينوى", "zakho": "زاخو", "halabja": "حلبجة", "tal afar": "تلعفر", "kurdistan": "كردستان",
-    "amman": "عمّان", "dubai": "دبي", "abu dhabi": "أبوظبي", "riyadh": "الرياض", "jeddah": "جدة", "kuwait city": "الكويت",
-    "doha": "الدوحة", "cairo": "القاهرة", "beirut": "بيروت", "damascus": "دمشق", "istanbul": "إسطنبول", "ankara": "أنقرة",
-    "tehran": "طهران", "london": "لندن", "berlin": "برلين", "paris": "باريس", "stockholm": "ستوكهولم",
-}
-LOCAL = {"country_code": "", "country": "", "region": "", "city": "شبكة محلية", "isp": "", "lat": None, "lon": None}
+LOCAL = {"country_code": "", "country": "", "region": "", "city": "Local network", "isp": "", "lat": None, "lon": None}
 
 
 def is_public(ip: str) -> bool:
@@ -64,8 +35,9 @@ def flag(code: str) -> str:
 
 
 class Geo:
-    def __init__(self, geo_dir: str | Path | None = None, online: bool = True, lang: str = "ar", timeout: float = 4):
-        self.online, self.lang, self.timeout = online, lang, timeout
+    def __init__(self, geo_dir: str | Path | None = None, online: bool = True, timeout: float = 4):
+        """Places are kept in English; i18n.py puts them into the reader's language."""
+        self.online, self.timeout = online, timeout
         self.city = self.asn = None
         if geo_dir:
             try:
@@ -79,22 +51,13 @@ class Geo:
                     if found:
                         setattr(self, attr, maxminddb.open_database(str(found[0])))
 
-    def arabic(self, place: dict) -> dict:
-        if self.lang != "ar":
-            return place
-        for key in ("city", "region"):
-            name = (place.get(key) or "").strip()
-            plain = name.lower().replace(" governorate", "").replace(" province", "").replace("-", " ").replace("'", "")
-            place[key] = AR_CITIES.get(plain, name)
-        place["country"] = AR_COUNTRIES.get((place.get("country_code") or "").upper(), place.get("country") or "")
-        return place
-
     @property
     def local(self) -> bool:
         return self.city is not None
 
-    def name(self, names: dict) -> str:
-        return (names or {}).get(self.lang) or (names or {}).get("en") or ""
+    @staticmethod
+    def name(names: dict) -> str:
+        return (names or {}).get("en") or ""
 
     def from_file(self, ip: str) -> dict | None:
         if not self.city:
@@ -119,10 +82,10 @@ class Geo:
         if not is_public(ip):
             return dict(LOCAL)
         place = self.from_file(ip)
-        return self.arabic(place) if place else None
+        return place
 
     def lookup(self, ips: list[str]) -> dict[str, dict]:
-        """{ip: place} for the addresses that could be placed (private addresses get «شبكة محلية»)."""
+        """{ip: place} for the addresses that could be placed (private addresses get "Local network")."""
         out, ask = {}, []
         for ip in dict.fromkeys(ips):
             if not is_public(ip):
@@ -135,7 +98,7 @@ class Geo:
                 ask.append(ip)
         if ask and self.online:
             out.update(self.ask_online(ask))
-        return {ip: self.arabic(place) for ip, place in out.items()}
+        return out
 
     def ask_online(self, ips: list[str]) -> dict[str, dict]:
         out = {}

@@ -80,7 +80,7 @@ def test_the_script_reports_with_its_own_key_only(setup):
 
 def test_the_dashboard_needs_the_password(setup):
     _, client, _ = setup
-    assert "الرمز السري" in client.get("/visits").get_data(as_text=True)
+    assert "Password" in client.get("/visits").get_data(as_text=True)
     assert client.get("/visits/api/stats").status_code == 401
     assert client.post("/visits/login", data={"password": "wrong"}).status_code == 401
     assert login(client).status_code == 303
@@ -107,13 +107,15 @@ def test_stats_visits_detail_and_csv(setup):
     other = setup[0].test_client()
     other.get("/", headers={"User-Agent": PHONE, "X-Real-IP": "37.236.1.1"})
     setup[0].test_client().get("/", headers={"User-Agent": "Googlebot/2.1 (+http://www.google.com/bot.html)"})
-    tracker.store.set_places({"37.236.1.1": {"country_code": "IQ", "country": "العراق", "city": "بغداد", "isp": "Earthlink",
+    tracker.store.set_places({"37.236.1.1": {"country_code": "IQ", "country": "Iraq", "city": "Baghdad", "isp": "Earthlink",
                                              "lat": 33.3, "lon": 44.4}})
     login(client, me=False)
     stats = client.get("/visits/api/stats?range=7").get_json()
     assert stats["kpi"]["visits"] == 1 and stats["kpi"]["visitors"] == 1  # the bot is hidden by default
-    assert stats["countries"][0]["label"] == "🇮🇶 العراق" and stats["devices"][0]["label"] == "موبايل"
-    assert sum(stats["hours"]) == 1 and stats["points"][0]["city"] == "بغداد"
+    assert stats["countries"][0]["label"] == "🇮🇶 Iraq" and stats["devices"][0]["label"] == "Mobile"
+    assert sum(stats["hours"]) == 1 and stats["points"][0]["city"] == "Baghdad"
+    arabic = client.get("/visits/api/stats?ui=ar").get_json()
+    assert arabic["countries"][0]["label"] == "🇮🇶 العراق" and arabic["cities"][0] == {"value": "Baghdad", "label": "بغداد", "n": 1}
     assert client.get("/visits/api/stats?bots=1").get_json()["kpi"]["visits"] == 2
     assert client.get("/visits/api/stats?country_code=JO").get_json()["kpi"]["visits"] == 0
     visits = client.get("/visits/api/visits?q=earthlink").get_json()
@@ -121,7 +123,7 @@ def test_stats_visits_detail_and_csv(setup):
     detail = client.get(f"/visits/api/visit/{visits['visits'][0]['id']}").get_json()
     assert detail["ua"] == PHONE and detail["visitor_visits"] == 1
     csv = client.get("/visits/export.csv").get_data(as_text=True)
-    assert csv.startswith("﻿id,time") and "بغداد" in csv
+    assert csv.startswith("﻿id,time") and "Baghdad" in csv
 
 
 def test_telegram_hears_of_new_visitors(tmp_path, monkeypatch):
@@ -136,4 +138,14 @@ def test_telegram_hears_of_new_visitors(tmp_path, monkeypatch):
     client.get("/", headers={"User-Agent": PHONE, "Referer": "https://www.google.com/"})
     client.get("/", headers={"User-Agent": PHONE})  # the same visitor again: no second message
     assert len(sent) == 1 and "botTOKEN/sendMessage" in sent[0][0]
-    assert sent[0][1]["chat_id"] == "42" and "زائر جديد" in sent[0][1]["text"] and "Google" in sent[0][1]["text"]
+    assert sent[0][1]["chat_id"] == "42" and "New visitor" in sent[0][1]["text"] and "Google" in sent[0][1]["text"]
+
+
+def test_the_dashboard_speaks_english_unless_asked(setup):
+    _, client, _ = setup
+    login(client)
+    page = client.get("/visits").get_data(as_text=True)
+    assert '<html lang="en" dir="ltr">' in page and "Site visitors" in page
+    client.set_cookie("vd_lang", "ar", path="/visits")
+    page = client.get("/visits").get_data(as_text=True)
+    assert '<html lang="ar" dir="rtl">' in page and "زوّار الموقع" in page

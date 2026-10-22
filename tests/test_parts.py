@@ -31,10 +31,10 @@ def test_empty_user_agent_is_a_bot():
 
 
 @pytest.mark.parametrize("referrer,expected", [
-    ("", "مباشر"), ("https://www.google.com/", "Google"), ("https://www.google.iq/search?q=x", "Google"),
+    ("", "direct"), ("https://www.google.com/", "Google"), ("https://www.google.iq/search?q=x", "Google"),
     ("https://l.facebook.com/l.php?u=x", "Facebook"), ("https://m.facebook.com/", "Facebook"), ("https://t.me/x", "Telegram"),
     ("https://lnkd.in/abc", "LinkedIn"), ("https://t.co/abc", "X"), ("android-app://org.telegram.messenger/", "Telegram"),
-    ("https://example.com/page", "example.com"), ("https://mysite.com/other", "داخلي"),
+    ("https://example.com/page", "example.com"), ("https://mysite.com/other", "internal"),
 ])
 def test_sources(referrer, expected):
     assert ua.source(referrer, "mysite.com") == expected
@@ -46,8 +46,19 @@ def test_utm_wins():
 
 def test_private_addresses_are_the_local_network():
     places = Geo(online=False).lookup(["192.168.1.5", "127.0.0.1", "8.8.8.8"])
-    assert places["192.168.1.5"]["city"] == "شبكة محلية" and "8.8.8.8" not in places
+    assert places["192.168.1.5"]["city"] == "Local network" and "8.8.8.8" not in places
 
 
 def test_flag():
     assert flag("iq") == "🇮🇶" and flag("") == ""
+
+
+def test_words_follow_the_reader():
+    from visitor_dashboard import i18n
+
+    assert i18n.word("en", "direct") == "Direct" and i18n.word("ar", "direct") == "مباشر"
+    assert i18n.word("en", "مباشر") == "Direct"  # saved by an earlier version
+    assert i18n.place("ar", "Baghdad") == "بغداد" and i18n.place("en", "Baghdad") == "Baghdad"
+    assert i18n.place("en", "Local network") == "Local network" and i18n.place("ar", "Local network") == "شبكة محلية"
+    assert i18n.country("ar", "IQ", "Iraq") == "العراق" and i18n.country("en", "IQ", "Iraq") == "Iraq"
+    assert i18n.ago("en", 7200) == "2 h ago" and i18n.pick("fr") == "en"

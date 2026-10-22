@@ -29,15 +29,15 @@ from urllib.parse import urlencode
 
 import requests
 
+from . import i18n
 from . import ua as ua_parser
 from .geo import Geo, flag
 from .store import Store
 
 log = logging.getLogger("visitor_dashboard")
 HERE = Path(__file__).resolve().parent
-VISITOR, OWNER, SESSION = "vd_id", "vd_me", "vd_s"
+VISITOR, OWNER, SESSION, LANG = "vd_id", "vd_me", "vd_s", "vd_lang"
 YEAR = 365 * 86400
-DEVICE = {"mobile": "موبايل", "desktop": "كمبيوتر", "tablet": "تابلت", "bot": "بوت"}
 DEVICE_ICON = {"mobile": "📱", "desktop": "💻", "tablet": "📲", "bot": "🤖"}
 RANGES = {"today": 0, "1": 1, "7": 7, "30": 30, "90": 90, "365": 365, "all": None}
 FILTERS = ("country_code", "city", "device", "os", "browser", "brand", "source", "path", "app", "isp", "lang", "screen", "visitor")
@@ -73,16 +73,16 @@ class Tracker:
     def __init__(self, password: str | None, db_path: str | Path = "visits.db", prefix: str = "/visits",
                  tz: str = "Asia/Baghdad", telegram: tuple | Callable | None = None, notify: str = "new",
                  notify_limit: int = 20, exclude_ips: tuple = (), ignore: tuple = (), geo_dir: str | Path | None = None,
-                 geo_online: bool = True, lang: str = "ar", keep_days: int | None = None, title: str = "زوّار الموقع"):
+                 geo_online: bool = True, lang: str = "en", keep_days: int | None = None, title: str | None = None):
         self.password = (password or "").strip()
         self.secret = hashlib.sha256(f"visitor-dashboard:{self.password}".encode()).digest()
         self.prefix = "/" + prefix.strip("/")
         self.store = Store(db_path)
-        self.geo = Geo(geo_dir, online=geo_online, lang=lang)
+        self.geo = Geo(geo_dir, online=geo_online)
         self.tz = zone(tz)
         self.telegram, self.notify, self.notify_limit = telegram, notify, notify_limit
         self.exclude_ips, self.ignore = set(exclude_ips), tuple(ignore)
-        self.keep_days, self.title = keep_days, title
+        self.keep_days, self.title, self.lang = keep_days, title, i18n.pick(lang)
         self.sent: list[float] = []      # notification times, for the hourly limit
         self.failures: dict[str, list] = defaultdict(list)  # failed logins per IP
         self.resolving = threading.Lock()
@@ -95,6 +95,13 @@ class Tracker:
             if value:
                 return value.split(",")[0].strip()[:45]
         return req.remote_addr or ""
+
+    def lang_of(self, req: Req) -> str:
+        """The reader's language: ?ui=, else the dashboard's switch (a cookie), else the site's choice."""
+        return i18n.pick(req.query.get("ui") or req.cookies.get(LANG), self.lang)
+
+    def title_in(self, lang: str) -> str:
+        return self.title or i18n.t(lang, "title")
 
     def sign(self, text: str) -> str:
         return hmac.new(self.secret, text.encode(), hashlib.sha256).hexdigest()[:32]
@@ -223,16 +230,20 @@ class Tracker:
             v = self.store.visit(visit_id)
             if not v:
                 return
-            place = " · ".join(x for x in (v["country"], v["region"] if v["region"] != v["city"] else "", v["city"]) if x)
-            device = " · ".join(x for x in (DEVICE.get(v["device"], v["device"]), f"{v['os']} {v['os_ver']}".strip(),
-                                            f"{v['brand']} {v['model']}".strip(), v["browser"], v["app"] and f"داخل {v['app']}") if x)
-            text = (f"👀 <b>{'زائر جديد' if v['new_visitor'] else 'زيارة'}</b> على {html.escape(v['host'] or '')}\n"
-                    f"{flag(v['country_code'])} {html.escape(place or 'مكان غير معروف')}"
+            L = self.lang
+            region = i18n.place(L, v["region"]) if v["region"] != v["city"] else ""
+            place = " · ".join(x for x in (i18n.country(L, v["country_code"], v["country"]), region, i18n.place(L, v["city"])) if x)
+            device = " · ".join(x for x in (i18n.word(L, v["device"]), f"{v['os']} {v['os_ver']}".strip(),
+                                            f"{v['brand']} {v['model']}".strip(), v["browser"],
+                                            v["app"] and i18n.t(L, "inside", app=v["app"])) if x)
+            text = (f"👀 <b>{i18n.t(L, 'new_visitor' if v['new_visitor'] else 'visit')}</b> {i18n.t(L, 'on')} "
+                    f"{html.escape(v['host'] or '')}\n"
+                    f"{flag(v['country_code'])} {html.escape(place or i18n.t(L, 'unknown_place'))}"
                     f"{' · ' + html.escape(v['isp']) if v['isp'] else ''}\n"
                     f"{DEVICE_ICON.get(v['device'], '')} {html.escape(device)}\n"
-                    f"🔗 جاي من: {html.escape(v['source'] or '')}\n📄 {html.escape(v['path'] or '/')}\n"
+                    f"🔗 {i18n.t(L, 'from')}: {html.escape(i18n.word(L, v['source']))}\n📄 {html.escape(v['path'] or '/')}\n"
                     f"🕐 {self.local(v['ts']):%Y-%m-%d %H:%M}\n"
-                    f'<a href="{base}{self.prefix}#v={visit_id}">كل التفاصيل</a>')
+                    f'<a href="{base}{self.prefix}#v={visit_id}">{i18n.t(L, "details")}</a>')
             requests.post(f"https://api.telegram.org/bot{bot[0]}/sendMessage", timeout=10,
                           json={"chat_id": bot[1], "text": text, "parse_mode": "HTML", "disable_web_page_preview": True})
         except Exception as exc:  # a notification never matters more than the site
@@ -252,8 +263,9 @@ class Tracker:
                          {"Cache-Control": "public, max-age=86400"})
         if sub == "hit" and req.method == "POST":
             return self.hit(req)
+        L = self.lang_of(req)
         if not self.password:
-            return Reply(503, page("لوحة الزوار", "<p>اللوحة مقفولة: ما انحط رمز سري (password) بإعدادات الموقع.</p>"))
+            return Reply(503, page(L, self.title_in(L), f"<p>{i18n.t(L, 'locked')}</p>"))
         if sub == "login" and req.method == "POST":
             return self.login(req)
         if sub == "logout":
@@ -261,34 +273,35 @@ class Tracker:
         if not self.logged_in(req):
             if sub.startswith("api/") or sub == "export.csv":
                 return Reply(401, b'{"error":"login"}', "application/json")
-            return Reply(200, self.login_page(), headers={"Cache-Control": "no-store"})
+            return Reply(200, self.login_page(L), headers={"Cache-Control": "no-store"})
         headers = {"Cache-Control": "no-store"}
         if sub == "":
             body = (HERE / "static" / "dashboard.html").read_text(encoding="utf-8")
-            body = body.replace("{{PREFIX}}", self.prefix).replace("{{TITLE}}", html.escape(self.title))
+            body = (body.replace("{{PREFIX}}", self.prefix).replace("{{TITLE}}", html.escape(self.title_in(L)))
+                    .replace("{{LANG}}", L).replace("{{DIR}}", "rtl" if L == "ar" else "ltr"))
             return Reply(200, body, headers={**headers, "X-Frame-Options": "DENY"})
         self.resolve()
         if sub == "api/stats":
-            return json_reply(self.stats(req.query))
+            return json_reply(self.stats(req.query, L))
         if sub == "api/visits":
-            return json_reply(self.visits(req.query))
+            return json_reply(self.visits(req.query, L))
         if sub.startswith("api/visit/") and sub[10:].isdigit():
-            found = self.detail(int(sub[10:]))
+            found = self.detail(int(sub[10:]), L)
             return json_reply(found) if found else Reply(404, b"{}", "application/json")
         if sub == "export.csv":
             return Reply(200, self.export(req.query), "text/csv; charset=utf-8",
                          {**headers, "Content-Disposition": f'attachment; filename="visits-{datetime.now(self.tz):%Y%m%d}.csv"'})
-        return Reply(404, page("مو موجود", "<p>هالصفحة مو موجودة.</p>"))
+        return Reply(404, page(L, self.title_in(L), f"<p>{i18n.t(L, 'not_found')}</p>"))
 
     def login(self, req: Req) -> Reply:
-        ip, now = self.ip(req), time.time()
+        ip, now, L = self.ip(req), time.time(), self.lang_of(req)
         self.failures[ip] = [t for t in self.failures[ip] if now - t < 900]
         if len(self.failures[ip]) >= 5:
-            return Reply(429, self.login_page("محاولات كثيرة. جرّب بعد ربع ساعة."))
+            return Reply(429, self.login_page(L, i18n.t(L, "too_many")))
         given = str(req.form.get("password", ""))
         if not hmac.compare_digest(given.encode(), self.password.encode()):
             self.failures[ip].append(now)
-            return Reply(401, self.login_page("الرمز غلط."))
+            return Reply(401, self.login_page(L, i18n.t(L, "wrong")))
         self.failures.pop(ip, None)
         expires = str(int(now + 30 * 86400))
         cookies = [(SESSION, f"{expires}.{self.sign('session' + expires)}", 30 * 86400, self.prefix)]
@@ -296,15 +309,16 @@ class Tracker:
             cookies.append((OWNER, self.sign("owner"), 5 * YEAR, "/"))
         return Reply(303, b"", headers={"Location": self.prefix}, cookies=cookies)
 
-    def login_page(self, error: str = "") -> str:
-        return page(self.title, f"""
+    def login_page(self, lang: str, error: str = "") -> str:
+        title = html.escape(self.title_in(lang))
+        return page(lang, title, f"""
 <form method="post" action="{self.prefix}/login" class="card">
-  <h1>🔒 {html.escape(self.title)}</h1>
-  <label for="pw">الرمز السري</label>
+  <h1>🔒 {title}</h1>
+  <label for="pw">{i18n.t(lang, "password")}</label>
   <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
-  <label class="check"><input type="checkbox" name="me" value="1" checked> لا تحسب زياراتي من هذا الجهاز</label>
+  <label class="check"><input type="checkbox" name="me" value="1" checked> {i18n.t(lang, "not_me")}</label>
   {f'<p class="error" role="alert">{html.escape(error)}</p>' if error else ''}
-  <button type="submit">دخول</button>
+  <button type="submit">{i18n.t(lang, "login")}</button>
 </form>""")
 
     # ---- the numbers ----
@@ -332,7 +346,7 @@ class Tracker:
             since = min(r["ts"] for r in rows)
         return rows, since, days or 0
 
-    def stats(self, query: dict) -> dict:
+    def stats(self, query: dict, lang: str = "en") -> dict:
         rows, since, _ = self.chosen(query)
         now = time.time()
         visitors = {r["visitor"] for r in rows}
@@ -365,44 +379,46 @@ class Tracker:
                     "online": len({r["visitor"] for r in online})},
             "days": [{"day": f"{d:%Y-%m-%d}", "visits": v[0], "visitors": len(v[1])} for d, v in sorted(per_day.items())],
             "hours": hours,
-            "devices": top("device", label=lambda k: DEVICE.get(k, k)),
+            "devices": top("device", label=lambda k: i18n.word(lang, k)),
             "os": top("os"), "browsers": top("browser"), "brands": top("brand"), "apps": top("app"),
-            "countries": top("country_code", label=lambda k: f"{flag(k)} {names.get(k, k)}"),
-            "cities": top("city"), "isps": top("isp"), "pages": top("path"), "sources": top("source"),
+            "countries": top("country_code", label=lambda k: f"{flag(k)} {i18n.country(lang, k, names.get(k, k))}"),
+            "cities": top("city", label=lambda k: i18n.place(lang, k)), "isps": top("isp"), "pages": top("path"),
+            "sources": top("source", label=lambda k: i18n.word(lang, k)),
             "languages": top("lang"), "screens": top("screen"),
             "clicks": [{"label": e["label"] or e["kind"], "kind": e["kind"], "n": e["n"]} for e in self.store.top_events(since)],
-            "points": [{"lat": r["lat"], "lon": r["lon"], "city": r["city"], "n": n}
+            "points": [{"lat": r["lat"], "lon": r["lon"], "city": i18n.place(lang, r["city"]), "n": n}
                        for (r, n) in _places(rows)][:300],
             "now": f"{datetime.now(self.tz):%Y-%m-%d %H:%M:%S}",
         }
 
-    def row(self, r: dict) -> dict:
+    def row(self, r: dict, lang: str = "en") -> dict:
         moment = self.local(r["ts"])
-        return {"id": r["id"], "time": f"{moment:%Y-%m-%d %H:%M}", "ago": ago(time.time() - r["ts"]),
-                "flag": flag(r["country_code"]), "country": r["country"], "country_code": r["country_code"],
-                "city": r["city"], "region": r["region"], "isp": r["isp"], "ip": r["ip"],
-                "device": r["device"], "device_label": DEVICE.get(r["device"], r["device"]),
+        return {"id": r["id"], "time": f"{moment:%Y-%m-%d %H:%M}", "ago": i18n.ago(lang, time.time() - r["ts"]),
+                "flag": flag(r["country_code"]), "country": i18n.country(lang, r["country_code"], r["country"]),
+                "country_code": r["country_code"], "city": i18n.place(lang, r["city"]),
+                "region": i18n.place(lang, r["region"]), "isp": r["isp"], "ip": r["ip"],
+                "device": r["device"], "device_label": i18n.word(lang, r["device"]),
                 "icon": DEVICE_ICON.get(r["device"], ""), "os": f"{r['os'] or ''} {r['os_ver'] or ''}".strip(),
                 "browser": f"{r['browser'] or ''} {r['browser_ver'] or ''}".strip(),
-                "model": f"{r['brand'] or ''} {r['model'] or ''}".strip(), "app": r["app"], "source": r["source"],
+                "model": f"{r['brand'] or ''} {r['model'] or ''}".strip(), "app": r["app"], "source": i18n.word(lang, r["source"]),
                 "path": r["path"], "title": r["title"], "duration": round(r["duration"] or 0), "scroll": r["scroll"],
                 "clicks": r["clicks"], "new": bool(r["new_visitor"]), "bot": bool(r["bot"]), "visitor": r["visitor"],
                 "online": time.time() - (r["last"] or r["ts"]) < 300}
 
-    def visits(self, query: dict) -> dict:
+    def visits(self, query: dict, lang: str = "en") -> dict:
         rows, _, _ = self.chosen(query)
         try:
             offset = max(int(query.get("offset", 0)), 0)
         except ValueError:
             offset = 0
-        return {"total": len(rows), "visits": [self.row(r) for r in rows[offset:offset + 50]]}
+        return {"total": len(rows), "visits": [self.row(r, lang) for r in rows[offset:offset + 50]]}
 
-    def detail(self, visit_id: int) -> dict | None:
+    def detail(self, visit_id: int, lang: str = "en") -> dict | None:
         r = self.store.visit(visit_id)
         if not r:
             return None
         count, first = self.store.count(r["visitor"])
-        out = {**self.row(r), "referrer": r["referrer"], "query": r["query"], "ua": r["ua"], "lang": r["lang"],
+        out = {**self.row(r, lang), "referrer": r["referrer"], "query": r["query"], "ua": r["ua"], "lang": r["lang"],
                "screen": r["screen"], "viewport": r["viewport"], "dpr": r["dpr"], "tz": r["tz"], "conn": r["conn"],
                "dark": r["dark"], "touch": r["touch"], "lat": r["lat"], "lon": r["lon"], "host": r["host"],
                "session": r["session"], "visitor_visits": count,
@@ -410,13 +426,13 @@ class Tracker:
                "events": [{"time": f"{self.local(e['ts']):%H:%M:%S}", "kind": e["kind"], "label": e["label"],
                            "target": e["target"]} for e in self.store.events(visit_id)],
                "history": [{"id": h["id"], "time": f"{self.local(h['ts']):%Y-%m-%d %H:%M}", "path": h["path"],
-                            "source": h["source"], "duration": round(h["duration"] or 0)} for h in self.store.history(r["visitor"])]}
+                            "source": i18n.word(lang, h["source"]), "duration": round(h["duration"] or 0)} for h in self.store.history(r["visitor"])]}
         return out
 
     def export(self, query: dict) -> str:
         rows, _, _ = self.chosen(query)
         out = io.StringIO()
-        out.write("﻿")  # so Excel reads the Arabic
+        out.write("﻿")  # so Excel reads non-English text right
         columns = ["id", "time"] + [c for c in rows[0] if c not in ("id", "ts", "key")] if rows else ["id", "time"]
         writer = csv.writer(out)
         writer.writerow(columns)
@@ -441,22 +457,12 @@ def zone(name: str):
         return timezone(timedelta(hours=3))
 
 
-def ago(seconds: float) -> str:
-    if seconds < 60:
-        return "هسه"
-    if seconds < 3600:
-        return f"قبل {int(seconds // 60)} دقيقة"
-    if seconds < 86400:
-        return f"قبل {int(seconds // 3600)} ساعة"
-    return f"قبل {int(seconds // 86400)} يوم"
-
-
 def json_reply(value) -> Reply:
     return Reply(200, json.dumps(value, ensure_ascii=False), "application/json; charset=utf-8", {"Cache-Control": "no-store"})
 
 
-def page(title: str, body: str) -> str:
-    return f"""<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+def page(lang: str, title: str, body: str) -> str:
+    return f"""<!doctype html><html lang="{lang}" dir="{'rtl' if lang == 'ar' else 'ltr'}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
 <title>{html.escape(title)}</title><style>
 :root{{--bg:#f6f6f4;--card:#fff;--ink:#0b0b0b;--muted:#52514e;--line:#e4e3df;--accent:#2a78d6;--bad:#c62828}}

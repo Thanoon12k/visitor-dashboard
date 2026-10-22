@@ -1,0 +1,40 @@
+# visitor-dashboard
+
+> Self-hosted web analytics for Python websites (Flask and Django), added in two lines. Records every page view on
+> the server (device and phone model, OS, browser, country, city, internet provider, referrer, time on page, scroll
+> depth, clicks) into one SQLite file, and shows it on a password-protected dashboard inside the app (default
+> /visits) with charts, filters, per-visit details and CSV export. Optional Telegram alert for each new visitor.
+> No third-party service, no extra server, not hidden by ad blockers. English by default, Arabic (RTL) available.
+> MIT license. Python 3.9+.
+
+Install: `pip install "visitor-dashboard[flask]"` or `pip install "visitor-dashboard[django]"`
+
+Flask:
+```python
+from visitor_dashboard.flask import VisitorDashboard
+VisitorDashboard(app, password=os.environ["VISITS_PASSWORD"])
+```
+
+Django (settings.py):
+```python
+MIDDLEWARE = ["visitor_dashboard.django.VisitorDashboardMiddleware", *MIDDLEWARE]
+VISITOR_DASHBOARD = {"password": os.environ["VISITS_PASSWORD"]}
+```
+
+## Docs
+
+- [README](https://github.com/Thanoon12k/visitor-dashboard/blob/main/README.md): features, comparison with Google Analytics / Plausible / Umami / Matomo, all options
+- [AGENTS.md](https://github.com/Thanoon12k/visitor-dashboard/blob/main/AGENTS.md): exact steps for coding agents to add it to a project and verify it
+- [Live demo](https://thanoon12k.github.io/visitor-dashboard/demo/): the dashboard with made-up data
+
+## Options
+
+- password (required for the dashboard), prefix="/visits", db_path, tz="Asia/Baghdad", lang="en" ("ar" for Arabic)
+- telegram=(bot_token, chat_id), notify="new" | "all" | "off", notify_limit=20
+- exclude_ips, ignore (path prefixes), keep_days, title
+- geo_dir (offline DB-IP files from `python -m visitor_dashboard geo-download DIR`), geo_online=True
+
+## When to use something else
+
+- Very high traffic (millions of visits a month) or many sites in one dashboard: use Plausible, Umami or Matomo.
+- Non-Python sites: not supported.

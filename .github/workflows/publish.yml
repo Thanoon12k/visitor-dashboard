@@ -1,0 +1,47 @@
+name: Publish to PyPI
+
+# Runs when a version tag (v0.2.0...) is pushed. Uses PyPI trusted publishing: no API token is stored.
+# One-time setup on pypi.org: Account → Publishing → add a pending publisher with
+#   project: visitor-dashboard, owner: Thanoon12k, repository: visitor-dashboard,
+#   workflow: publish.yml, environment: pypi
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: The tag matches the version in the code
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(python -c "import re; print(re.search(r'__version__ = \"(.+)\"', open('visitor_dashboard/__init__.py').read())[1])")
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::tag $GITHUB_REF_NAME but the code says $version"; exit 1; }
+      - run: pip install build twine pytest flask django
+      - run: pip install -e . && pytest -q
+      - run: python -m build && twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

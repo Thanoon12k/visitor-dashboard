@@ -1,15 +1,45 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "visitor-dashboard"
-version = "0.1.0"
-description = "A password-protected page on your own Flask or Django site that shows every visit (device, place, origin, time, clicks) with charts."
+dynamic = ["version"]
+description = "Self-hosted web analytics for Flask and Django in two lines: every visit (device, location, referrer, time, clicks) on a password-protected dashboard inside your app, with Telegram alerts. No third-party service."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Thanoon Younis Mohammed" }]
+keywords = [
+    "analytics", "web-analytics", "self-hosted-analytics", "visitor-tracking", "visitor-analytics", "page-views",
+    "flask", "flask-extension", "django", "django-middleware", "dashboard", "google-analytics-alternative",
+    "privacy", "sqlite", "telegram", "geoip", "user-agent", "arabic", "rtl",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Natural Language :: Arabic",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: Log Analysis",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
+]
 dependencies = ["requests>=2.25"]
 
 [project.optional-dependencies]
@@ -20,9 +50,17 @@ test = ["pytest", "flask>=2.0", "django>=3.2"]
 
 [project.urls]
 Homepage = "https://github.com/Thanoon12k/visitor-dashboard"
+Demo = "https://thanoon12k.github.io/visitor-dashboard/demo/"
+Documentation = "https://github.com/Thanoon12k/visitor-dashboard#readme"
+"For AI agents" = "https://github.com/Thanoon12k/visitor-dashboard/blob/main/AGENTS.md"
+Changelog = "https://github.com/Thanoon12k/visitor-dashboard/blob/main/CHANGELOG.md"
+Issues = "https://github.com/Thanoon12k/visitor-dashboard/issues"
 
 [tool.setuptools]
-packages = ["visitor_dashboard"]
+packages = ["visitor_dashboard", "visitor_dashboard.static"]
+
+[tool.setuptools.dynamic]
+version = { attr = "visitor_dashboard.__version__" }
 
 [tool.setuptools.package-data]
-visitor_dashboard = ["static/*"]
+"visitor_dashboard.static" = ["*.html", "*.js"]

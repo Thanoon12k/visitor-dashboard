@@ -1,44 +1,42 @@
-# visitor-dashboard · لوحة الزوّار
+# visitor-dashboard
 
-صفحة محمية برمز سري تنضاف لأي موقع Python (Flask أو Django) بسطرين، وتعرض كل زيارة بتفاصيلها مع رسوم بيانية.
-بدون ذكاء صناعي، بدون خدمة خارجية مدفوعة، وكل البيانات تبقى عندك بملف SQLite واحد.
+A password-protected page you add to any Python website (Flask or Django) in two lines. It shows every visit with
+its details, plus charts. No AI, no paid service, no tracking company: the data stays on your server in one SQLite file.
 
-> A password-protected page for any Flask or Django site, added in two lines: every visit (device, place, origin,
-> time, clicks) with live charts. No AI and no paid service; the data stays in one SQLite file on your server.
+![The dashboard](docs/screenshot.png)
 
-![لوحة الزوار](docs/screenshot.png)
+## What it records about each visit
 
-## شنو تسجل عن كل زيارة
-
-| | التفاصيل |
+| | Details |
 |---|---|
-| 🕐 **الزمان** | التاريخ والساعة بتوقيت بغداد، كم بقى بالصفحة، وكم قرأ منها (٪ من النزول) |
-| 📱 **الجهاز** | موبايل أو كمبيوتر أو تابلت، الشركة والموديل (Samsung SM-A515F، iPhone...)، النظام ونسخته، المتصفح، حجم الشاشة، اللغة، نوع الاتصال (4g...)، الوضع الليلي |
-| 🌍 **المكان** | الدولة والمحافظة والمدينة، شركة الإنترنت (Earthlink، Zain، Asiacell...)، والإحداثيات التقريبية على خريطة |
-| 🔗 **الجهة** | منين جا: گوگل، فيسبوك، تلگرام، واتساب، لينكدإن، X، رابط مباشر، أو أي موقع ثاني، ويقرا `utm_source` و`?ref=` |
-| 📲 **التطبيق** | إذا فتح الرابط من داخل تطبيق (فيسبوك، إنستغرام، تيك توك، تلگرام...) |
-| 👆 **الضغطات** | كل ضغطة على زر أو رابط، والتحميلات (PDF...)، وروابط التواصل (واتساب، تلگرام، إيميل) |
-| 👤 **الزائر** | جديد لو راجع، كم مرة زار، أول مرة جا، وكل زياراته السابقة |
-| 🤖 **البوتات** | گوگل بوت، معاينات الروابط (واتساب، تلگرام، فيسبوك)، والسكربتات تنفصل عن الزوار الحقيقيين |
+| 🕐 **When** | Date and time in your time zone, time spent on the page, and how far down the page was read (%) |
+| 📱 **Device** | Phone, computer or tablet; maker and model (Samsung SM-A515F, iPhone…); OS and version; browser; screen size; language; connection type (4g…); dark mode |
+| 🌍 **Where** | Country, region and city; internet provider (Earthlink, Zain, Asiacell…); approximate coordinates on a map |
+| 🔗 **Origin** | Google, Facebook, Telegram, WhatsApp, LinkedIn, X, direct, or any other site. Reads `utm_source` and `?ref=` too |
+| 📲 **In-app** | Whether the link was opened inside an app (Facebook, Instagram, TikTok, Telegram…) |
+| 👆 **Clicks** | Every button and link clicked, downloads (PDF…), and contact links (WhatsApp, Telegram, email) |
+| 👤 **Visitor** | New or returning, number of visits, first seen, and all their earlier visits |
+| 🤖 **Bots** | Googlebot, link previews (WhatsApp, Telegram, Facebook) and scripts are kept apart from real visitors |
 
-## اللوحة
+## The dashboard
 
-- أرقام فوق: الزيارات، الزوار، الجدد، صفحة لكل زائر، معدل البقاء، واللي طلعوا من أول صفحة، و**المتصلين هسه**
-- رسوم بيانية: الزيارات والزوار باليوم، بأي ساعة يجون، نوع الجهاز، الدول، المدن، شركات الإنترنت، الصفحات، منين جاو، الأنظمة، المتصفحات، الموبايلات، التطبيقات، الضغطات، اللغات، الشاشات، والخريطة
-- **فلترة بضغطة**: اضغط على أي دولة أو مدينة أو مصدر أو جهاز وكل اللوحة تتفلتر عليه، وتگدر تجمع كذا فلتر
-- فترات: اليوم، 7 أيام، 30 يوم، 3 أشهر، سنة، الكل، وبحث بالـ IP أو المدينة أو الصفحة أو الجهاز
-- جدول بكل زيارة، تضغط عليها تطلع كل تفاصيلها، وضغطاتها، وباقي زيارات نفس الشخص
+- Headline numbers: visits, visitors, new visitors, pages per visitor, average time spent, bounce rate, and **who is online now**
+- Charts: visits and visitors per day, visits by hour, device type, countries, cities, internet providers, pages,
+  origins, operating systems, browsers, phone makers, in-app browsers, top clicks, languages, screen sizes, and a map
+- **Click to filter**: click any country, city, origin or device and the whole dashboard filters to it; filters combine
+- Time ranges (today, 7 days, 30 days, 3 months, a year, all) and search by IP, city, page or device
+- A list of every visit; click one to see all its details, its clicks, and the same person's other visits
 
-![تفاصيل زيارة](docs/visit.png)
+![One visit](docs/visit.png)
 
-- تتحدث وحدها كل 20 ثانية، وتصدير Excel (CSV)
-- تشتغل عالموبايل، وبالوضع الليلي
+- Refreshes itself every 20 seconds; export to Excel (CSV)
+- Works on phones and in dark mode; the interface is in Arabic (right-to-left)
 
-## التنصيب
+## Install
 
 ```bash
 pip install "visitor-dashboard[flask] @ git+https://github.com/Thanoon12k/visitor-dashboard"
-# أو لموقع Django:
+# or, for a Django site:
 pip install "visitor-dashboard[django] @ git+https://github.com/Thanoon12k/visitor-dashboard"
 ```
 
@@ -47,88 +45,94 @@ pip install "visitor-dashboard[django] @ git+https://github.com/Thanoon12k/visit
 ```python
 from visitor_dashboard.flask import VisitorDashboard
 
-VisitorDashboard(app, password="رمزك السري")
+VisitorDashboard(app, password="your secret code")
 ```
 
 ### Django (`settings.py`)
 
 ```python
-MIDDLEWARE = ["visitor_dashboard.django.VisitorDashboardMiddleware", *MIDDLEWARE]  # بالأول
-VISITOR_DASHBOARD = {"password": "رمزك السري"}
+MIDDLEWARE = ["visitor_dashboard.django.VisitorDashboardMiddleware", *MIDDLEWARE]  # first
+VISITOR_DASHBOARD = {"password": "your secret code"}
 ```
 
-بس هذا. افتح `https://موقعك/visits` واكتب الرمز. أي صفحة HTML يرسلها موقعك تنحسب تلقائياً، بدون ما تغيّر قوالبك.
+That's it. Open `https://your-site/visits` and enter the code. Every HTML page your site sends is counted
+automatically; your templates don't change.
 
-> لا تكتب الرمز بالكود: خليه بمتغير بيئة، مثلاً `password=os.environ["VISITS_PASSWORD"]`.
+> Don't write the code in your source: keep it in an environment variable, e.g. `password=os.environ["VISITS_PASSWORD"]`.
 
-## الإعدادات (كلها اختيارية عدا الرمز)
+## Options (all optional except the password)
 
-| الإعداد | الافتراضي | شنو يسوي |
+| Option | Default | What it does |
 |---|---|---|
-| `password` | | الرمز السري للوحة. بدونه اللوحة مقفولة (والتسجيل يشتغل عادي) |
-| `prefix` | `/visits` | عنوان اللوحة |
-| `db_path` | `instance/visits.db` (Flask)، `BASE_DIR/visits.db` (Django) | وين تنحفظ الزيارات |
-| `tz` | `Asia/Baghdad` | توقيت العرض |
-| `telegram` | | `(token, chat_id)`، أو دالة ترجعهم، حتى يوصلك إشعار عالبوت |
-| `notify` | `"new"` | `"new"`: إشعار لكل زائر جديد، `"all"`: لكل زيارة، `"off"`: بدون |
-| `notify_limit` | `20` | أقصى عدد إشعارات بالساعة |
-| `exclude_ips` | `()` | عناوين IP ما تنحسب |
-| `ignore` | `()` | بدايات مسارات ما تنحسب، مثل `("/admin", "/api")` |
-| `geo_dir` | | مجلد قاعدة بيانات المواقع (شوف تحت) |
-| `geo_online` | `True` | يدوّر المكان أونلاين إذا ماكو قاعدة بيانات |
-| `keep_days` | | يحذف الزيارات الأقدم من هالعدد من الأيام |
-| `title` | `زوّار الموقع` | عنوان اللوحة |
+| `password` | | The dashboard's secret code. Without it the dashboard stays locked (recording still works) |
+| `prefix` | `/visits` | The dashboard's address |
+| `db_path` | `instance/visits.db` (Flask), `BASE_DIR/visits.db` (Django) | Where visits are saved |
+| `tz` | `Asia/Baghdad` | Time zone for display |
+| `telegram` | | `(token, chat_id)`, or a function returning them, to get a message from your bot |
+| `notify` | `"new"` | `"new"`: a message for each new visitor, `"all"`: for every visit, `"off"`: none |
+| `notify_limit` | `20` | Most messages per hour |
+| `exclude_ips` | `()` | IP addresses that are never counted |
+| `ignore` | `()` | Path prefixes that are never counted, e.g. `("/admin", "/api")` |
+| `geo_dir` | | Folder with the location database (see below) |
+| `geo_online` | `True` | Look places up online when there is no database |
+| `keep_days` | | Delete visits older than this many days |
+| `title` | `زوّار الموقع` | The dashboard's title |
 
-### استثناء زياراتك
+### Leave out your own visits
 
-لما تدخل اللوحة، خلي ✔️ على «لا تحسب زياراتي من هذا الجهاز»، وزياراتك من هذا المتصفح ما تنحسب بعد. سوّيها مرة بكل جهاز عندك.
+When you log in, keep "don't count my visits from this device" ticked, and visits from that browser are no longer
+counted. Do it once on each of your devices.
 
-### إشعار تلگرام
+### Telegram notifications
 
 ```python
 VisitorDashboard(app, password="...", telegram=(os.environ["BOT_TOKEN"], os.environ["CHAT_ID"]))
 ```
 
-يوصلك لكل زائر جديد (مو البوتات): الدولة والمدينة والشركة، الجهاز والموديل، منين جا، الصفحة، ورابط للتفاصيل.
+For each new visitor (bots excluded) you get the country, city and provider, the device and model, where they
+came from, the page, and a link to the visit's details.
 
-### تتبع الضغطات
+### Click tracking
 
-كل الأزرار والروابط تنحسب تلقائياً باسمها الظاهر. إذا تريد تسمي زر بنفسك:
+Buttons and links are tracked automatically by their visible text. To name one yourself:
 
 ```html
-<button data-track="زر الاشتراك">اشترك</button>
+<button data-track="Subscribe button">Subscribe</button>
 ```
 
-## المكان: أونلاين أو من ملف
+## Locations: online or from a file
 
-افتراضياً المكان ينجاب من [ip-api.com](https://ip-api.com) (مجاني)، ولو ما اشتغل من [ipwho.is](https://ipwho.is). كل IP ينسأل عنه مرة وحدة بس،
-وبعد ما تنحفظ الزيارة، فالزائر ما ينتظر أبد.
+By default places come from [ip-api.com](https://ip-api.com) (free), falling back to [ipwho.is](https://ipwho.is).
+Each IP is looked up only once, and only after the visit is saved, so visitors never wait.
 
-إذا السيرفر ما يوصل للإنترنت (مثل حساب PythonAnywhere المجاني، يسمح بمواقع معينة بس)، نزّل قاعدة البيانات المجانية مرة وحدة:
+If your server can't reach those services (PythonAnywhere's free plan, for example, only allows certain sites),
+download the free database once:
 
 ```bash
 pip install maxminddb
-python -m visitor_dashboard geo-download ~/geo            # المدن + الشركات (~140 MB)
-python -m visitor_dashboard geo-download ~/geo --country  # الدول + الشركات بس (~17 MB)
+python -m visitor_dashboard geo-download ~/geo            # cities + providers (~140 MB)
+python -m visitor_dashboard geo-download ~/geo --country  # countries + providers only (~17 MB)
 ```
 
-وبعدين `geo_dir="~/geo"` (بالمسار الكامل). الملفات من [DB-IP](https://db-ip.com) (CC BY 4.0) وتتحدث كل شهر، فعيد التنزيل كل كم شهر.
+Then pass `geo_dir="~/geo"`. The files come from [DB-IP](https://db-ip.com) (CC BY 4.0) and are updated monthly,
+so download them again every few months.
 
-> المكان من الـ IP تقريبي، على مستوى المدينة، ومو دقيق دائماً، خصوصاً مع الموبايل (أحياناً يطلع بغداد وهو بمدينة ثانية) أو مع VPN.
+> A location from an IP address is approximate (city level) and not always right, especially on mobile networks
+> (a visitor may show up in Baghdad while in another city) or behind a VPN.
 
-## الخصوصية والأمان
+## Privacy and security
 
-- الرمز يتقارن بطريقة آمنة، و5 محاولات غلط بربع ساعة تقفل الدخول من ذاك الـ IP.
-- جلسة الدخول بكوكي موقّعة (30 يوم)، وتطلع بزر «خروج».
-- التقارير من المتصفح موقّعة بمفتاح عشوائي لكل زيارة، فمحد يگدر يغيّر زيارة غيره.
-- السكربت ما يسوي كوكيز خاصة بيه، والموقع يحط كوكي وحدة (`vd_id`) حتى يعرف الزائر الراجع.
-- إذا موقعك يخدم ناس بأوروبا أو بمكان بيه قوانين خصوصية، اكتب سياسة خصوصية تذكر إنك تسجل الزيارات.
+- The password is compared in constant time, and 5 wrong tries in 15 minutes lock out that IP.
+- The login session is a signed cookie (30 days), ended by the logout button.
+- Reports from the browser are signed with a random key per visit, so nobody can alter someone else's visit.
+- The script sets no cookies of its own; the site sets one cookie (`vd_id`) to recognise returning visitors.
+- If your site serves people in Europe or anywhere with privacy laws, publish a privacy policy that says you log visits.
 
-## الاختبارات
+## Tests
 
 ```bash
 pip install -e ".[test]"
 pytest
 ```
 
-الترخيص: MIT
+License: MIT

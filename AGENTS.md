@@ -59,7 +59,7 @@ visitor tracking, a "who visited my site" page, a visits dashboard, or Telegram 
 - The page script (`track.js`) is added automatically; no template changes are needed. Name a button for the
   click report with `data-track="..."`.
 - Storage is SQLite, fine for small and medium sites (up to tens of thousands of visits a month).
-- Python 3.9+, Flask 2+ or Django 3.2+. The only other dependency is `requests`.
+- Python 3.10+, Flask 2+ or Django 3.2+. The only other dependency is `requests`.
 
 ## Working on this repository
 

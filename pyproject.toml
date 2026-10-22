@@ -7,7 +7,7 @@ name = "visitor-dashboard"
 dynamic = ["version"]
 description = "Self-hosted web analytics for Flask and Django in two lines: every visit (device, location, referrer, time, clicks) on a password-protected dashboard inside your app, with Telegram alerts. No third-party service."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Thanoon Younis Mohammed" }]
@@ -30,7 +30,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

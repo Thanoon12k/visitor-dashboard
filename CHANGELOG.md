@@ -5,7 +5,7 @@
 - English by default; Arabic (right-to-left) with `lang="ar"` or the 🌐 button on the dashboard.
 - Visits are saved in a language-neutral form and translated when shown.
 - The map uses Esri's gray canvas: English place names, no API key, a dark version for dark mode.
-- First release on PyPI.
+- First release on PyPI. Needs Python 3.10 or newer (3.9 has reached its end of life).
 
 ## 0.1.0
 

@@ -166,6 +166,7 @@ def page() -> str:
     html = (ROOT / "visitor_dashboard" / "static" / "dashboard.html").read_text(encoding="utf-8")
     swaps = [
         ('<html lang="{{LANG}}" dir="{{DIR}}">', '<html lang="en" dir="ltr">'),
+        ('<meta name="robots" content="noindex">\n', ""),  # the real dashboard hides from search engines; the demo shouldn't
         ("<title>{{TITLE}}</title>", "<title>visitor-dashboard · live demo</title>\n"
          '<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E📊%3C/text%3E%3C/svg%3E">\n'
          '<meta name="description" content="Live demo of visitor-dashboard: self-hosted web analytics for Flask and Django, '

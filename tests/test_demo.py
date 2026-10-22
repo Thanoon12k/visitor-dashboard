@@ -15,7 +15,7 @@ def load():
 
 def test_the_demo_page_is_the_dashboard_without_a_server():
     html = load().page()
-    assert "{{" not in html and '<script src="api.js"></script>' in html and "Live demo with made-up visits" in html
+    assert "{{" not in html and "noindex" not in html and '<script src="api.js"></script>' in html and "Live demo with made-up visits" in html
 
 
 def test_the_demo_data_is_sane():
